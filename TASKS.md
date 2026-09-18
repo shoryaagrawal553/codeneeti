@@ -110,7 +110,7 @@ This document is the shared coordination and task ownership board for human oper
 ## Backend Workstream
 
 ### BE-001 — Initialize FastAPI Project & Core Configuration
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** None  
 **Files/Area:** `/backend/**`  
 **Goal:** Set up the Python FastAPI project skeleton, dependency manifest, environment configuration, and Pydantic data schemas.  

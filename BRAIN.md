@@ -22,10 +22,10 @@ The project is in the scaffolding and pre-implementation phase. All foundational
 - **Known issues:** None (no code implemented).
 
 ## Backend State
-- **Implemented:** None.
+- **Implemented:** `BE-001` core foundation (FastAPI app, CORS middleware for `http://localhost:5173`, configuration loader with `.env` support, strict Pydantic schemas matching `API_CONTRACT.md`, `GET /api/health` endpoint).
 - **In progress:** None.
-- **Pending:** Tasks `BE-001` through `BE-006` in [TASKS.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/TASKS.md) (FastAPI initialization, validation endpoints, Semgrep/Bandit runners, Gemini Analyzer, Fix, and Verifier agents).
-- **Known issues:** None (no code implemented).
+- **Pending:** Tasks `BE-002` through `BE-006` in [TASKS.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/TASKS.md) (languages & validation endpoints, Semgrep/Bandit runners, Gemini Analyzer, Fix, and Verifier agents).
+- **Known issues:** None.
 
 ## Agent System State
 - **Analyzer Agent:**
@@ -46,18 +46,18 @@ The project is in the scaffolding and pre-implementation phase. All foundational
 
 ## API Integration State
 - **Current API contract version/state:** Version 1.0.0 approved and documented in [API_CONTRACT.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/API_CONTRACT.md).
-- **Implemented endpoints:** None.
+- **Implemented endpoints:** `GET /api/health` (verified returning 200 OK with `{"status": "ok", "version": "1.0.0"}`).
 - **Frontend integration status:** Not implemented.
 - **Mock API status:** Fixture schema defined in [API_CONTRACT.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/API_CONTRACT.md); file creation in `/frontend/src/mocks/` pending `FE-001`.
 - **Known mismatches:** None.
 
 ## Testing State
-- **Tests that exist:** None.
-- **Tests passing/failing:** None.
-- **Important untested areas:** Entire product (backend endpoints, static analysis subprocess runners, agent prompts and fallbacks, frontend components, and diff rendering).
+- **Tests that exist:** `backend/tests/test_health.py` (3 tests), `backend/tests/test_models.py` (4 tests).
+- **Tests passing/failing:** 7 passed, 0 failed.
+- **Important untested areas:** Tasks BE-002 through BE-006 (endpoints not yet built, static analysis runners, agent prompts, pipeline integration).
 
 ## Current Work
-Project governance, documentation, task tracking, and Antigravity workflow skills established; ready to begin frontend (`FE-001`) and backend (`BE-001`) implementation.
+BE-001 complete; ready for BE-002 (Health, Languages & Validation Endpoints) or frontend task initiation.
 
 ## Blockers
 None.
@@ -72,6 +72,7 @@ None.
 - [API_CONTRACT.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/API_CONTRACT.md) v1.0.0 established.
 - [TASKS.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/TASKS.md) task board established.
 - 5 operational skills created under `.agents/skills/`.
+- `BE-001` (Initialize FastAPI Project & Core Configuration) implemented and verified.
 
 ## Important Context
 - **Boundary Isolation:** Strict separation between `/frontend/**` and `/backend/**`. Cross-boundary edits are forbidden without updating [API_CONTRACT.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/API_CONTRACT.md).

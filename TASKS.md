@@ -31,7 +31,7 @@ This document is the shared coordination and task ownership board for human oper
 ## Frontend Workstream
 
 ### FE-001 — Initialize Frontend Scaffolding & Design System
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** None  
 **Files/Area:** `/frontend/**`  
 **Goal:** Initialize the React + Vite application structure, configure package scripts, create modern vanilla CSS design tokens, and set up mock fixture infrastructure.  

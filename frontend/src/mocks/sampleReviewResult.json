@@ -1,0 +1,43 @@
+{
+  "review_id": "c1a9382f-6821-4f2b-86d1-9a74e502b4d9",
+  "language": "python",
+  "findings": [
+    {
+      "id": "find-1",
+      "line_start": 6,
+      "line_end": 7,
+      "rule_id": "bandit.B608",
+      "severity": "Critical",
+      "title": "SQL Injection via Unsanitized Input",
+      "explanation": "The user input 'username' is directly concatenated into a SQL statement. An attacker could enter malicious payloads such as \"' OR '1'='1\" to bypass authentication or extract sensitive database contents.",
+      "category": "Security",
+      "cwe": "CWE-89",
+      "confidence": "High",
+      "verification_status": "Resolved"
+    },
+    {
+      "id": "find-2",
+      "line_start": 2,
+      "line_end": 2,
+      "rule_id": "bandit.B105",
+      "severity": "High",
+      "title": "Hardcoded Database Secret",
+      "explanation": "A plaintext password string was found assigned directly in the source code. Hardcoded credentials can be leaked via version control systems.",
+      "category": "Security",
+      "cwe": "CWE-798",
+      "confidence": "High",
+      "verification_status": "Resolved"
+    }
+  ],
+  "fixed_code": "import os\nimport sqlite3\n\nDB_PASS = os.getenv('DB_PASSWORD')\n\ndef get_user(username):\n    conn = sqlite3.connect('users.db')\n    cursor = conn.cursor()\n    query = \"SELECT * FROM users WHERE name = ?\"\n    cursor.execute(query, (username,))\n    return cursor.fetchall()",
+  "fix_available": true,
+  "verification_available": true,
+  "new_findings_after_fix": [],
+  "summary": {
+    "total_findings": 2,
+    "resolved": 2,
+    "unresolved": 0,
+    "regressions": 0
+  },
+  "warnings": []
+}

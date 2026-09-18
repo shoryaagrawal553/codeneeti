@@ -159,7 +159,7 @@ This document is the shared coordination and task ownership board for human oper
 - Prompt explicitly isolates submitted code inside `<code_to_analyze>` data blocks with anti-prompt-injection system instructions.
 - Generates plain-language explanation, contextual severity, and category per finding.
 - Filters obvious false positives with explicit reasoning.
-- Fallback handler returning raw static findings with `enrichment_unavailable: true` on Gemini failure.
+- Fallback handler returning raw static findings with a descriptive entry in `warnings[]` (e.g., `"Enrichment unavailable: Gemini did not respond."`) on Gemini failure, per `API_CONTRACT.md` `ReviewResult` schema.
 
 ---
 

@@ -279,12 +279,35 @@ Lightweight backend dependency footprint with direct, deterministic control over
 
 ---
 
+### DEC-013 â€” Python Dependency Format: requirements.txt
+
+**Status:** Accepted  
+**Date:** 2026-09-18
+
+**Decision:**
+Use `requirements.txt` as the sole Python dependency manifest for the backend. Do not use `pyproject.toml` or a build system (Poetry, Hatch, etc.) for the MVP.
+
+**Reason:**
+`requirements.txt` is universally understood, requires no build-system tooling, and is the fastest option for hackathon setup and onboarding. All required backend packages (`fastapi`, `uvicorn`, `pydantic`, `google-generativeai`, `semgrep`, `bandit`) are installable via `pip install -r requirements.txt`.
+
+**Alternatives considered:**
+- *pyproject.toml (Poetry / Hatch):* Adds build-system configuration, lock-file management, and dependency resolver overhead with no meaningful benefit for a single-developer hackathon backend.
+
+**Consequences:**
+- BE-001 must create `requirements.txt` (not `pyproject.toml`) as the backend dependency file.
+- Backend environment setup is: `python -m venv .venv && pip install -r requirements.txt`.
+
+**Scope:**
+`/backend/requirements.txt`
+
+---
+
 ## Unresolved Decisions (From PRD Section 22)
 
 The following minor items remain open for human developer resolution and are NOT accepted decisions:
 
-1. **OD-1: Gemini Model Variant** — Specific model variant selection (`gemini-1.5-flash` vs `gemini-1.5-pro`).
-2. **OD-2: Hackathon Deadline & Duration** — Final schedule determining post-MVP buffer.
-3. **OD-3: React Diff Component Library** — Specific diff package selection (`react-diff-viewer-continued` vs lightweight custom diff).
-4. **OD-4: Per-Agent Timeout Duration** — Proposed default is 30s per agent (90s total pipeline); pending empirical tuning.
-5. **OD-5: Semgrep Ruleset Selection** — Specific registry rulesets to include (e.g., `p/python`, `p/javascript`, `p/owasp-top-ten`).
+1. **OD-1: Gemini Model Variant** â€” Specific model variant selection (`gemini-1.5-flash` vs `gemini-1.5-pro`).
+2. **OD-2: Hackathon Deadline & Duration** â€” Final schedule determining post-MVP buffer.
+3. **OD-3: React Diff Component Library** â€” Specific diff package selection (`react-diff-viewer-continued` vs lightweight custom diff).
+4. **OD-4: Per-Agent Timeout Duration** â€” Proposed default is 30s per agent (90s total pipeline); pending empirical tuning.
+5. **OD-5: Semgrep Ruleset Selection** â€” Specific registry rulesets to include (e.g., `p/python`, `p/javascript`, `p/owasp-top-ten`).

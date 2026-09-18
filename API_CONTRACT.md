@@ -274,7 +274,7 @@ Backend developers must adhere to the following guarantees:
 
 ## 8. Mock Data for Frontend Development
 
-Frontend developers can use this static mock fixture to build and test the complete UI in isolation (e.g., placed at `/frontend/mocks/sampleReviewResult.json`):
+Frontend developers can use this static mock fixture to build and test the complete UI in isolation (e.g., placed at `/frontend/src/mocks/sampleReviewResult.json`):
 
 ```json
 {

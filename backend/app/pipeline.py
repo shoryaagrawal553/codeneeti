@@ -182,6 +182,24 @@ class AnalysisPipeline:
             f"Verification complete in {stage_duration:.1f}ms: resolved={summary.resolved}, unresolved={summary.unresolved}, regressions={summary.regressions}"
         )
 
+        # Safety & Degraded State Guard: If regressions were introduced, mark fix as unavailable for developer safety
+        fix_unavailable_reason: Optional[str] = None
+        if regressions:
+            fix_available = False
+            fixed_code = None
+            fix_unavailable_reason = (
+                f"Proposed fix introduced {len(regressions)} new regression issue(s) during verification. "
+                "Automated fix withheld for safety; manual remediation required."
+            )
+            warnings.append(f"Automated Fix Unavailable: {fix_unavailable_reason}")
+        elif not fix_available:
+            for w in warnings:
+                if "Automated Fix Unavailable:" in w:
+                    fix_unavailable_reason = w.split("Automated Fix Unavailable:")[-1].strip()
+                    break
+            if not fix_unavailable_reason:
+                fix_unavailable_reason = "Automated repair could not safely be produced for this snippet."
+
         # STAGE: COMPLETED
         total_duration = (time.perf_counter() - start_time) * 1000
         logger.info(
@@ -194,6 +212,7 @@ class AnalysisPipeline:
             findings=verified_findings,
             fixed_code=fixed_code,
             fix_available=fix_available,
+            fix_unavailable_reason=fix_unavailable_reason,
             verification_available=verification_available,
             new_findings_after_fix=regressions,
             summary=summary,

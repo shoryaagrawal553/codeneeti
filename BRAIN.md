@@ -54,36 +54,30 @@ The project is in the scaffolding and pre-implementation phase. All foundational
   - Known limitations: Graceful offline fallback populates `warnings[]` when `GEMINI_API_KEY` is not present.
 - **Fix Agent:**
   - Status: Implemented (`backend/app/agents.py`).
-  - Current behavior: Generates minimal code repairs targeting detected findings while preserving surrounding logic and architecture without removing security checks.
+  - Current behavior: Generates minimal code repairs targeting detected findings while preserving surrounding logic and architecture. If an automated repair cannot safely be determined (e.g. requires external API keys, database migrations, complex architectural restructuring, or API rate limits), it gracefully yields `fix_available: false`, populates standardized `Automated Fix Unavailable: <reason>. Manual remediation is recommended.` warnings, and populates `fix_unavailable_reason`.
   - Dependencies: Google Gemini API, enriched findings, original code.
-  - Known limitations: Returns `fix_available: false` and `fixed_code: null` when Gemini is unavailable.
-- **Verifier Agent:**
+  - Known limitations: Returns `fix_available: false` and `fixed_code: null` when Gemini is unavailable or repair is unsafe.
+- **Verifier Agent & Regression Guard:**
   - Status: Implemented (`backend/app/agents.py` + `backend/app/pipeline.py`).
   - Current behavior: Re-runs Bandit/Semgrep on generated fix and compares findings deterministically via fingerprints and rule IDs. Tags findings as `Resolved` (rule no longer fires), `Unresolved` (rule still fires), or `Regression` (new rule triggered).
+  - Safety Guard: If regressions are detected on a candidate fix, the pipeline withholds the fix (`fix_available: false`, `fixed_code: null`, `fix_unavailable_reason` explaining that the fix introduced regressions).
   - Dependencies: Semgrep/Bandit static runners, Gemini for line-shift reconciliation if needed.
   - Known limitations: Strictly evidence-based; never marks a finding Resolved without scanner confirmation.
 
 ## API Integration State
-- **Current API contract version/state:** Version 1.0.0 approved and documented in API_CONTRACT.md (with backward-compatible additive tool metadata).
+- **Current API contract version/state:** Version 1.0.0 approved and documented in API_CONTRACT.md (with backward-compatible additive fields `fix_unavailable_reason` and tool metadata).
 - **Implemented endpoints:**
   - `GET /api/health`: Returns 200 OK `{"status": "ok", "version": "1.0.0", "tools": {...}}`.
   - `GET /api/languages`: Returns 200 OK with metadata for Python, JavaScript, TypeScript, Java, C, C++, Go.
-  - `POST /api/analyze`: Returns 200 OK with complete `ReviewResult` matching API_CONTRACT.md schema.
-- **Frontend integration status:** Frontend UI (`FE-001` through `FE-006`) is built and tested; live E2E integration verification (`INT-001`) is ready to run.
+  - `POST /api/analyze`: Returns 200 OK with complete `ReviewResult` matching API_CONTRACT.md schema (including `fix_unavailable_reason`).
+  - `POST /api/refine`: Returns 200 OK with `RefineResult` allowing interactive developer prompting.
+- **Frontend integration status:** Frontend UI (`FE-001` through `FE-006`) is built and tested; `DiffViewer.jsx` seamlessly displays "Automated Fix Unavailable" warning states with full backend reasoning.
 - **Mock API status:** Fully supported in frontend (`VITE_USE_MOCKS=true`) and backend fallback modes.
 - **Known mismatches:** None.
 
 ## Testing State
-- **Tests that exist:**
-  - `backend/tests/test_endpoints.py` (10 tests)
-  - `backend/tests/test_analyzers.py` (5 tests)
-  - `backend/tests/test_agents.py` (5 tests)
-  - `backend/tests/test_pipeline.py` (3 tests)
-  - `backend/tests/test_health.py` (3 tests)
-  - `backend/tests/test_models.py` (4 tests)
-  - `backend/tests/test_languages.py` (5 tests)
-  - `backend/tests/test_security_and_hardening.py` (10 tests)
-- **Tests passing/failing:** 45 passed, 0 failed.
+- **Tests that exist:** 63 automated tests in `backend/tests/` across `test_endpoints.py`, `test_analyzers.py`, `test_agents.py`, `test_pipeline.py`, `test_health.py`, `test_models.py`, `test_languages.py`, and `test_security_and_hardening.py`.
+- **Tests passing/failing:** 63 passed, 0 failed.
 - **Important untested areas:** Full browser-driven end-to-end user journey with backend daemon (INT-001).
 
 

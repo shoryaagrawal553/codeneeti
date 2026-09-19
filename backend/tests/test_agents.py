@@ -349,3 +349,78 @@ def get_user(username):
     assert summary.regressions >= 1
 
 
+def test_fix_agent_automated_fix_unavailable_when_api_key_missing(sample_raw_findings):
+    """Verify FixAgent returns fix_available=False with Automated Fix Unavailable warning when API key missing."""
+    async def _run():
+        enriched = [
+            Finding(
+                id=f.id,
+                line_start=f.line_start,
+                line_end=f.line_end,
+                rule_id=f.rule_id,
+                severity=f.severity,
+                title="Finding",
+                explanation="Explanation",
+                category="Security",
+                cwe=f.cwe,
+                confidence=f.confidence,
+                verification_status="Unavailable",
+            )
+            for f in sample_raw_findings
+        ]
+        with patch("app.agents.settings.GEMINI_API_KEY", ""):
+            agent = FixAgent()
+            code, available, warnings = await agent.generate_fix("x = 1", enriched)
+            assert code is None
+            assert available is False
+            assert any("Automated Fix Unavailable:" in w for w in warnings)
+            assert any("GEMINI_API_KEY is not configured" in w for w in warnings)
+
+    asyncio.run(_run())
+
+
+def test_fix_agent_automated_fix_unavailable_when_fix_unsafe_or_empty(sample_raw_findings):
+    """Verify FixAgent marks fix as unavailable when model returns empty code or leaves code unchanged."""
+    async def _run():
+        original_code = "cursor.execute(f'SELECT * FROM users WHERE id = {user_id}')"
+        mock_output = FixOutput(
+            fixed_code="",
+            fix_summary="Complex multi-table schema migration required; automated repair is not safe."
+        )
+
+        enriched = [
+            Finding(
+                id=f.id,
+                line_start=f.line_start,
+                line_end=f.line_end,
+                rule_id=f.rule_id,
+                severity=f.severity,
+                title="Finding",
+                explanation="Explanation",
+                category="Security",
+                cwe=f.cwe,
+                confidence=f.confidence,
+                verification_status="Unavailable",
+            )
+            for f in sample_raw_findings
+        ]
+
+        with patch("app.agents.settings.GEMINI_API_KEY", "mock-key"):
+            with patch("google.generativeai.GenerativeModel") as mock_model_cls:
+                mock_model = MagicMock()
+                mock_response = MagicMock()
+                mock_response.text = mock_output.model_dump_json()
+                mock_model.generate_content_async = AsyncMock(return_value=mock_response)
+                mock_model.generate_content.return_value = mock_response
+                mock_model_cls.return_value = mock_model
+
+                agent = FixAgent()
+                code, available, warnings = await agent.generate_fix(original_code, enriched)
+                assert code is None
+                assert available is False
+                assert any("Automated Fix Unavailable:" in w for w in warnings)
+                assert any("Complex multi-table schema migration" in w for w in warnings)
+
+    asyncio.run(_run())
+
+

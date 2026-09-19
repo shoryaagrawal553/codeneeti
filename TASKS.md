@@ -202,6 +202,19 @@ This document is the shared coordination and task ownership board for human oper
 
 ---
 
+### BE-008 — Automated Fix Unavailable Feature & Regression Guard
+**Status:** DONE  
+**Depends on:** `BE-005`, `BE-006`  
+**Files/Area:** `/backend/**`, `API_CONTRACT.md`  
+**Goal:** Implement explicit backend support for degraded state "Automated Fix Unavailable" with detailed explanations when repairs cannot safely be generated or when regressions occur.  
+**Acceptance criteria:**
+- `ReviewResult.fix_unavailable_reason: Optional[str]` added to [API_CONTRACT.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/API_CONTRACT.md) and [models.py](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/backend/app/models.py).
+- `FixAgent.generate_fix` returns standardized `Automated Fix Unavailable: <reason>. Manual remediation is recommended.` warnings when repairs are not feasible, API key is missing, rate limits occur, or code requires manual architectural changes.
+- Pipeline withholds candidate fixes if Verifier Agent detects regressions (`fix_available = False`, `fixed_code = None`, `fix_unavailable_reason` populated).
+- Automated tests in `test_agents.py` and `test_pipeline.py` pass (63 total passing tests across test suite).
+
+---
+
 ## Integration Workstream
 
 ### INT-001 — End-to-End Local Pipeline Integration & Verification

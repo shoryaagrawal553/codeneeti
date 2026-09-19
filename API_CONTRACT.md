@@ -236,6 +236,7 @@ Returns a complete `ReviewResult` object:
 | `findings` | array of `Finding` | Yes | List of detected and analyzed findings. |
 | `fixed_code` | string or null | Yes | Complete corrected code string, or `null` if fix failed/unavailable. |
 | `fix_available` | boolean | Yes | `true` if Fix Agent generated code; `false` on fallback/failure. |
+| `fix_unavailable_reason` | string or null | No | Explanation of why automated fix is unavailable when `fix_available: false`. |
 | `verification_available` | boolean | Yes | `true` if Verifier Agent completed; `false` on fallback/failure. |
 | `new_findings_after_fix` | array of `NewFindingAfterFix`| Yes | Regressions detected in fixed code. |
 | `summary` | `VerificationSummary` | Yes | Aggregated counts of resolution statuses. |

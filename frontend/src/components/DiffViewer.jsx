@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { diffLines } from 'diff';
-import { Copy, Check, AlertTriangle, ShieldCheck, FileDiff } from 'lucide-react';
+import { Copy, Check, AlertTriangle, ShieldCheck, FileDiff, Sparkles } from 'lucide-react';
 
 export default function DiffViewer({
   originalCode,
@@ -8,8 +8,10 @@ export default function DiffViewer({
   fixAvailable = true,
   verificationAvailable = true,
   warnings = [],
+  onApplyFix,
 }) {
   const [copied, setCopied] = useState(false);
+  const [applied, setApplied] = useState(false);
 
   const handleCopy = async () => {
     if (!fixedCode) return;
@@ -20,6 +22,13 @@ export default function DiffViewer({
     } catch (err) {
       console.error('Failed to copy fixed code:', err);
     }
+  };
+
+  const handleApply = () => {
+    if (!fixedCode || !onApplyFix) return;
+    onApplyFix(fixedCode);
+    setApplied(true);
+    setTimeout(() => setApplied(false), 2500);
   };
 
   // Degraded state: Fix not available
@@ -79,29 +88,60 @@ export default function DiffViewer({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="btn btn-secondary"
-          style={{
-            padding: '0.4rem 0.9rem',
-            fontSize: '0.825rem',
-            color: copied ? 'var(--status-resolved)' : 'var(--text-primary)',
-            borderColor: copied ? 'var(--status-resolved-border)' : 'var(--border-medium)',
-          }}
-        >
-          {copied ? (
-            <>
-              <Check size={14} style={{ color: 'var(--status-resolved)' }} />
-              Copied to Clipboard!
-            </>
-          ) : (
-            <>
-              <Copy size={14} />
-              Copy Fixed Code
-            </>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {onApplyFix && (
+            <button
+              type="button"
+              onClick={handleApply}
+              className="btn btn-primary"
+              style={{
+                padding: '0.4rem 0.9rem',
+                fontSize: '0.825rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                backgroundColor: applied ? 'var(--status-resolved)' : undefined,
+                borderColor: applied ? 'var(--status-resolved-border)' : undefined,
+              }}
+            >
+              {applied ? (
+                <>
+                  <Check size={14} />
+                  Applied to Editor!
+                </>
+              ) : (
+                <>
+                  <Sparkles size={14} />
+                  Apply Fix to Editor
+                </>
+              )}
+            </button>
           )}
-        </button>
+
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="btn btn-secondary"
+            style={{
+              padding: '0.4rem 0.9rem',
+              fontSize: '0.825rem',
+              color: copied ? 'var(--status-resolved)' : 'var(--text-primary)',
+              borderColor: copied ? 'var(--status-resolved-border)' : 'var(--border-medium)',
+            }}
+          >
+            {copied ? (
+              <>
+                <Check size={14} style={{ color: 'var(--status-resolved)' }} />
+                Copied to Clipboard!
+              </>
+            ) : (
+              <>
+                <Copy size={14} />
+                Copy Fixed Code
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Developer Disclaimer Banner */}

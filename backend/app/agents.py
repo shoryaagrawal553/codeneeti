@@ -287,7 +287,7 @@ class FixAgent:
             return None, False, warnings
 
         if not settings.GEMINI_API_KEY:
-            warnings.append("Fix generation unavailable: GEMINI_API_KEY is not configured.")
+            warnings.append("Automated Fix Unavailable: GEMINI_API_KEY is not configured. Manual remediation is recommended.")
             return None, False, warnings
 
         # Bound findings to top 15 highest-severity to avoid token overflow
@@ -319,7 +319,8 @@ class FixAgent:
             "3. Do NOT delete functionality, remove validation, or comment out code to silence issues.\n"
             "4. Do NOT introduce unnecessary dependencies.\n"
             "5. Return the COMPLETE corrected source file string.\n"
-            "6. Output must strictly conform to JSON schema."
+            "6. Output must strictly conform to JSON schema.\n"
+            "7. If an automated repair cannot safely be determined (e.g. requires external credentials, schema migration, or architectural redesign), set fixed_code to empty string and explain in fix_summary why automated fix is unavailable."
         )
 
         # Prevent prompt injection delimiter breakout attacks (case-insensitive)
@@ -355,13 +356,16 @@ class FixAgent:
 
             fixed_code = parsed.fixed_code
             if not fixed_code or not fixed_code.strip() or fixed_code.strip() == code.strip():
+                reason = parsed.fix_summary or "The Fix Agent was unable to produce a safe automated repair for this snippet."
+                warnings.append(f"Automated Fix Unavailable: {reason}")
                 return None, False, warnings
 
             return fixed_code, True, warnings
 
         except Exception as err:
             logger.warning(f"Fix Agent failed: {err}")
-            warnings.append(f"Fix generation error: {str(err).splitlines()[0] if str(err) else 'Gemini error'}")
+            err_msg = str(err).splitlines()[0] if str(err) else "Gemini error"
+            warnings.append(f"Automated Fix Unavailable: AI service error ({err_msg}). Manual remediation is recommended.")
             return None, False, warnings
 
     async def refine_fix(

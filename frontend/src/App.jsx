@@ -35,6 +35,7 @@ export default function App() {
   const [analysisStage, setAnalysisStage] = useState(0);
   const [reviewResult, setReviewResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [fixAppliedMessage, setFixAppliedMessage] = useState(null);
   const [backendHealth, setBackendHealth] = useState({ status: 'checking' });
 
   // Check backend health on mount
@@ -96,6 +97,16 @@ export default function App() {
     setReviewResult(null);
     setStatus('idle');
     setErrorMessage(null);
+    setFixAppliedMessage(null);
+  };
+
+  // Handle Apply Fix from Diff Viewer into Monaco Editor
+  const handleApplyFix = (fixedCode) => {
+    if (!fixedCode) return;
+    setCode(fixedCode);
+    setFixAppliedMessage('Verified fix successfully applied to editor! You can re-run analysis to confirm resolution.');
+    // Smooth scroll back to editor workspace
+    window.scrollTo({ top: 100, behavior: 'smooth' });
   };
 
   // Trigger analysis pipeline
@@ -111,6 +122,7 @@ export default function App() {
     }
 
     setErrorMessage(null);
+    setFixAppliedMessage(null);
     setStatus('analyzing');
     setAnalysisStage(0);
 
@@ -266,6 +278,35 @@ export default function App() {
             </div>
           )}
 
+          {/* Fix Applied Success Banner */}
+          {fixAppliedMessage && (
+            <div
+              className="animate-fade-in"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.85rem 1.25rem',
+                backgroundColor: 'var(--status-resolved-bg)',
+                border: '1px solid var(--status-resolved-border)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--status-resolved)',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+              }}
+            >
+              <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
+              <span style={{ flex: 1 }}>{fixAppliedMessage}</span>
+              <button
+                type="button"
+                onClick={() => setFixAppliedMessage(null)}
+                style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1.2rem', lineHeight: 1 }}
+              >
+                &times;
+              </button>
+            </div>
+          )}
+
           {/* Editor Workspace Container */}
           <div
             style={{
@@ -386,6 +427,7 @@ export default function App() {
                   fixAvailable={reviewResult.fix_available}
                   verificationAvailable={reviewResult.verification_available}
                   warnings={reviewResult.warnings}
+                  onApplyFix={handleApplyFix}
                 />
               )}
             </div>

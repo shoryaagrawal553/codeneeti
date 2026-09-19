@@ -161,6 +161,7 @@ class ReviewResult(BaseModel):
     findings: List[Finding]
     fixed_code: Optional[str] = None
     fix_available: bool
+    fix_unavailable_reason: Optional[str] = None
     verification_available: bool
     new_findings_after_fix: List[NewFindingAfterFix] = Field(default_factory=list)
     summary: VerificationSummary

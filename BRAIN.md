@@ -23,9 +23,11 @@ The project has completed initial frontend (`FE-001` through `FE-006` plus Pixel
   - `FE-003`: Typed API service client (`/frontend/src/services/api.js`) for `GET /api/health`, `GET /api/languages`, and `POST /api/analyze`, with offline mock fallback and typed contract error mappings.
   - `FE-004`: Pipeline progress component (`/frontend/src/components/PipelineProgress.jsx`) with multi-stage status indicators (`Analyzing... → Explaining... → Generating Fix... → Verifying...`).
   - `FE-005`: Structured Findings list (`/frontend/src/components/FindingsList.jsx`) and detail view (`/frontend/src/components/FindingDetail.jsx`) with severity badges (Critical, High, Medium, Low, Info), CWE tags, line ranges, and resolution tags.
-  - `FE-006`: Unified diff viewer (`/frontend/src/components/DiffViewer.jsx`) displaying original vs. fixed code additions/deletions, copy button with clipboard confirmation, and developer disclaimer.
+  - `FE-006`: Unified and side-by-side diff viewer (`/frontend/src/components/DiffViewer.jsx`) displaying original vs. fixed code additions/deletions, copy button with clipboard confirmation, developer disclaimer, and empirical verification pipeline status banner.
+  - `FE-007`: Scroll-linked 300-frame sequence canvas animation (`/frontend/src/components/FrameSequenceHero.jsx`) powered by GSAP ScrollTrigger, ASCII preloader, and 4-phase narrative progression.
+  - `FE-008`: Warm, creative developer visual refinement with FlowForge-inspired centered floating pill navigation, cozy workstation monitor container with colored window control dots, calm pastel severity indicators, and removal of cyberpunk clutter.
 - **In progress:** None.
-- **Pending:** Integration with live backend pipeline (INT-001).
+- **Pending:** None (All features verified end-to-end).
 - **Known issues:** None.
 
 ## Backend State

@@ -4,8 +4,13 @@
 
 export const SUPPORTED_LANGUAGES = [
   { id: 'auto', display_name: 'Auto-detect', extensions: [] },
-  { id: 'python', display_name: 'Python', extensions: ['.py'] },
-  { id: 'javascript', display_name: 'JavaScript', extensions: ['.js'] },
+  { id: 'python', display_name: 'Python (.py)', extensions: ['.py', '.pyw'] },
+  { id: 'javascript', display_name: 'JavaScript (.js)', extensions: ['.js', '.jsx', '.mjs', '.cjs'] },
+  { id: 'typescript', display_name: 'TypeScript (.ts)', extensions: ['.ts', '.tsx', '.mts', '.cts'] },
+  { id: 'java', display_name: 'Java (.java)', extensions: ['.java'] },
+  { id: 'c', display_name: 'C (.c)', extensions: ['.c', '.h'] },
+  { id: 'cpp', display_name: 'C++ (.cpp)', extensions: ['.cpp', '.cc', '.cxx', '.hpp', '.hh', '.hxx'] },
+  { id: 'go', display_name: 'Go (.go)', extensions: ['.go'] },
 ];
 
 export const MAX_CODE_BYTES = 102400; // 100 KB limit from API_CONTRACT.md
@@ -28,8 +33,8 @@ export const VERIFICATION_STATUS = {
 export const ERROR_CODES = {
   MISSING_CODE: 'Please enter or upload code before submitting.',
   CODE_TOO_LARGE: 'Code exceeds maximum size of 100 KB (102,400 bytes).',
-  UNSUPPORTED_LANGUAGE: 'Selected language is not supported. Choose Python, JavaScript, or Auto-detect.',
-  UNSUPPORTED_FILE_TYPE: 'Invalid file format. Only .py and .js files are accepted.',
+  UNSUPPORTED_LANGUAGE: 'Selected language is not supported. Supported: Python, JavaScript, TypeScript, Java, C, C++, Go, or Auto-detect.',
+  UNSUPPORTED_FILE_TYPE: 'Invalid file format. Supported file formats: .py, .js, .ts, .java, .c, .cpp, .go.',
   ANALYSIS_PARSE_ERROR: 'Failed to parse static analysis findings.',
   ANALYSIS_TOOL_ERROR: 'Static analysis engine encountered an unexpected error.',
   PIPELINE_ERROR: 'Internal pipeline review failure.',

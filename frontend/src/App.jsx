@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Layers, Sparkles, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Layers, Sparkles, CheckCircle2, Terminal } from 'lucide-react';
 import Header from './components/Header';
 import CodeEditor from './components/CodeEditor';
 import EditorToolbar from './components/EditorToolbar';
@@ -8,10 +8,11 @@ import PipelineProgress from './components/PipelineProgress';
 import FindingsList from './components/FindingsList';
 import FindingDetail from './components/FindingDetail';
 import DiffViewer from './components/DiffViewer';
-import LandingScene from './components/LandingScene';
 import NotificationBanner from './components/NotificationBanner';
-import { analyzeCode, getHealth } from './services/api';
-import { MAX_CODE_BYTES } from './types';
+import FrameSequenceHero from './components/FrameSequenceHero';
+import SpiderPointerEffect from './components/SpiderPointerEffect';
+import { analyzeCode, getHealth, getLanguages } from './services/api';
+import { MAX_CODE_BYTES, SUPPORTED_LANGUAGES } from './types';
 
 // Benchmark sample code for quick testing and judges' demonstration
 const DEMO_SAMPLE_PYTHON = `import sqlite3
@@ -27,13 +28,13 @@ def get_user(username):
 `;
 
 export default function App() {
-  // Top-level view mode: 'landing' (pixel-art meadow) | 'workspace' (code review app)
-  const [viewMode, setViewMode] = useState('landing');
+  const workspaceRef = useRef(null);
 
-  const [code, setCode] = useState('');
-  const [language, setLanguage] = useState('auto');
-  const [isAutoDetect, setIsAutoDetect] = useState(true);
-  const [filename, setFilename] = useState(null);
+  // Editor and submission state
+  const [code, setCode] = useState(DEMO_SAMPLE_PYTHON);
+  const [language, setLanguage] = useState('python');
+  const [isAutoDetect, setIsAutoDetect] = useState(false);
+  const [filename, setFilename] = useState('sample_query.py');
   const [selectedFinding, setSelectedFinding] = useState(null);
   const [activeTab, setActiveTab] = useState('findings'); // 'findings' | 'diff'
 
@@ -44,11 +45,25 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [fixAppliedMessage, setFixAppliedMessage] = useState(null);
   const [backendHealth, setBackendHealth] = useState({ status: 'checking' });
+  const [availableLanguages, setAvailableLanguages] = useState(SUPPORTED_LANGUAGES);
 
-  // Check backend health on mount
+  // Check backend health & fetch supported languages on mount
   useEffect(() => {
     getHealth().then((health) => {
       setBackendHealth(health);
+    });
+
+    getLanguages().then((res) => {
+      if (res?.languages && res.languages.length > 0) {
+        setAvailableLanguages([
+          { id: 'auto', display_name: 'Auto-detect' },
+          ...res.languages.map((l) => ({
+            id: l.id,
+            display_name: l.display_name ? `${l.display_name} (${l.extensions?.[0] || ''})` : l.id,
+            extensions: l.extensions || [],
+          })),
+        ]);
+      }
     });
   }, []);
 
@@ -62,14 +77,32 @@ export default function App() {
 
   const isOverLimit = codeStats.bytes > MAX_CODE_BYTES;
 
-  // Auto-detect language from code keywords or filename
+  // Auto-detect language from code keywords or filename across all 7 supported languages
   const detectedLanguage = useMemo(() => {
     if (filename) {
-      if (filename.toLowerCase().endsWith('.py')) return 'Python';
-      if (filename.toLowerCase().endsWith('.js')) return 'JavaScript';
+      const lower = filename.toLowerCase();
+      if (lower.endsWith('.py') || lower.endsWith('.pyw')) return 'Python';
+      if (lower.endsWith('.js') || lower.endsWith('.jsx') || lower.endsWith('.mjs') || lower.endsWith('.cjs')) return 'JavaScript';
+      if (lower.endsWith('.ts') || lower.endsWith('.tsx') || lower.endsWith('.mts') || lower.endsWith('.cts')) return 'TypeScript';
+      if (lower.endsWith('.java')) return 'Java';
+      if (lower.endsWith('.cpp') || lower.endsWith('.cc') || lower.endsWith('.cxx') || lower.endsWith('.hpp') || lower.endsWith('.hh') || lower.endsWith('.hxx')) return 'C++';
+      if (lower.endsWith('.c') || lower.endsWith('.h')) return 'C';
+      if (lower.endsWith('.go')) return 'Go';
     }
 
     if (code) {
+      if (code.includes('package main') || code.includes('func main()')) {
+        return 'Go';
+      }
+      if (code.includes('public class ') || code.includes('System.out.')) {
+        return 'Java';
+      }
+      if (code.includes('#include <') || code.includes('int main(') || code.includes('std::')) {
+        return code.includes('std::') || code.includes('cout') ? 'C++' : 'C';
+      }
+      if (code.includes('interface ') || code.includes(': string') || code.includes(': number') || code.includes('export type')) {
+        return 'TypeScript';
+      }
       if (code.includes('def ') || code.includes('import ') || code.includes('elif ')) {
         return 'Python';
       }
@@ -79,6 +112,15 @@ export default function App() {
     }
     return null;
   }, [code, filename]);
+
+  // Normalized language passed to Monaco Editor
+  const editorLanguage = useMemo(() => {
+    if (language !== 'auto') return language;
+    if (!detectedLanguage) return 'python';
+    const norm = detectedLanguage.toLowerCase();
+    if (norm === 'c++') return 'cpp';
+    return norm;
+  }, [language, detectedLanguage]);
 
   // Handle file load from FileUploader or direct drop
   const handleFileLoaded = ({ code: fileCode, filename: name, language: lang }) => {
@@ -91,16 +133,31 @@ export default function App() {
     setErrorMessage(null);
   };
 
-  // Direct file upload handler (for drag & drop onto Monaco or toolbar upload)
+  // Direct file upload handler
   const handleFileUpload = (file) => {
     if (!file) return;
     const name = file.name;
     const lowerName = name.toLowerCase();
-    const isPy = lowerName.endsWith('.py');
-    const isJs = lowerName.endsWith('.js');
 
-    if (!isPy && !isJs) {
-      setErrorMessage(`Unsupported file "${name}". CodeGuard strictly supports .py and .js files.`);
+    let detectedLang = null;
+    if (lowerName.endsWith('.py') || lowerName.endsWith('.pyw')) {
+      detectedLang = 'python';
+    } else if (lowerName.endsWith('.js') || lowerName.endsWith('.jsx') || lowerName.endsWith('.mjs') || lowerName.endsWith('.cjs')) {
+      detectedLang = 'javascript';
+    } else if (lowerName.endsWith('.ts') || lowerName.endsWith('.tsx') || lowerName.endsWith('.mts') || lowerName.endsWith('.cts')) {
+      detectedLang = 'typescript';
+    } else if (lowerName.endsWith('.java')) {
+      detectedLang = 'java';
+    } else if (lowerName.endsWith('.cpp') || lowerName.endsWith('.cc') || lowerName.endsWith('.cxx') || lowerName.endsWith('.hpp') || lowerName.endsWith('.hh') || lowerName.endsWith('.hxx')) {
+      detectedLang = 'cpp';
+    } else if (lowerName.endsWith('.c') || lowerName.endsWith('.h')) {
+      detectedLang = 'c';
+    } else if (lowerName.endsWith('.go')) {
+      detectedLang = 'go';
+    }
+
+    if (!detectedLang) {
+      setErrorMessage(`Unsupported file "${name}". CodeGuard supports Python, JavaScript, TypeScript, Java, C, C++, and Go files.`);
       return;
     }
 
@@ -116,7 +173,7 @@ export default function App() {
       handleFileLoaded({
         code: content,
         filename: name,
-        language: isPy ? 'python' : 'javascript',
+        language: detectedLang,
       });
     };
     reader.onerror = () => {
@@ -135,7 +192,7 @@ export default function App() {
     setFixAppliedMessage(null);
   };
 
-  // Handle Clear
+  // Handle Clear / Reset
   const handleClear = () => {
     setCode('');
     setFilename(null);
@@ -150,8 +207,10 @@ export default function App() {
   const handleApplyFix = (fixedCode) => {
     if (!fixedCode) return;
     setCode(fixedCode);
-    setFixAppliedMessage('Verified fix successfully applied to editor! You can re-run analysis to confirm resolution.');
-    window.scrollTo({ top: 100, behavior: 'smooth' });
+    setFixAppliedMessage('Verified fix successfully applied to Monaco Editor! You can re-run analysis to confirm resolution.');
+    if (workspaceRef.current) {
+      workspaceRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   // Trigger analysis pipeline
@@ -171,10 +230,10 @@ export default function App() {
     setStatus('analyzing');
     setAnalysisStage(0);
 
-    // Deterministic progression sequence for visual feedback
-    const stageTimer1 = setTimeout(() => setAnalysisStage(1), 350);
-    const stageTimer2 = setTimeout(() => setAnalysisStage(2), 700);
-    const stageTimer3 = setTimeout(() => setAnalysisStage(3), 1050);
+    // Progression timer sequence for visual feedback
+    const stageTimer1 = setTimeout(() => setAnalysisStage(1), 400);
+    const stageTimer2 = setTimeout(() => setAnalysisStage(2), 900);
+    const stageTimer3 = setTimeout(() => setAnalysisStage(3), 1400);
 
     try {
       const result = await analyzeCode({
@@ -209,25 +268,89 @@ export default function App() {
     }
   };
 
-  // If in 'landing' mode, display the full-screen pixel-art meadow with CRT gateway
-  if (viewMode === 'landing') {
-    return <LandingScene onEnter={() => setViewMode('workspace')} />;
-  }
+  // Scroll navigation helpers
+  const scrollToWorkspace = () => {
+    if (workspaceRef.current) {
+      workspaceRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const scrollToHero = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Navigation Header */}
+    <div style={{ position: 'relative', backgroundColor: '#F8F6FC', minHeight: '100vh', color: 'var(--text-primary)' }}>
+      {/* Interactive Cyber Spider Cursor Follower */}
+      <SpiderPointerEffect />
+      
+      {/* 2. Hero: Scroll-Driven Frame Sequence Animation (LOCKED & UNTOUCHED) */}
+      <div id="hero">
+        <FrameSequenceHero onStartReview={scrollToWorkspace} />
+      </div>
+
+      {/* 5. FlowForge-Inspired Floating Pill Navigation */}
       <Header
         onReset={handleClear}
-        onGoToLanding={() => setViewMode('landing')}
+        onScrollToHero={scrollToHero}
+        onScrollToWorkspace={scrollToWorkspace}
         backendHealth={backendHealth}
       />
 
-      {/* Main Workspace */}
-      <main style={{ flex: 1, padding: '1.75rem 0 3rem' }}>
-        <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* 8. Creative Developer Review Workspace */}
+      <main
+        ref={workspaceRef}
+        id="workspace"
+        style={{
+          padding: '3rem 0 5rem',
+          position: 'relative',
+          zIndex: 10,
+          backgroundColor: '#F8F6FC',
+        }}
+      >
+        <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          {/* File Upload Zone */}
+          {/* Section Heading: WHAT ARE YOU REVIEWING? (Warm & Approachable) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', paddingBottom: '0.5rem' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                color: '#5E4F98',
+                backgroundColor: '#EDE8F8',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                width: 'fit-content',
+              }}
+            >
+              <Terminal size={13} />
+              DEVELOPER WORKSPACE
+            </div>
+
+            <h2
+              style={{
+                fontSize: 'clamp(1.8rem, 3.2vw, 2.4rem)',
+                fontWeight: 800,
+                letterSpacing: '-0.025em',
+                color: '#1A1626',
+                margin: 0,
+              }}
+            >
+              WHAT ARE YOU REVIEWING?
+            </h2>
+
+            <p style={{ fontSize: '0.95rem', color: '#58516B', margin: 0, maxWidth: '680px', lineHeight: 1.55 }}>
+              Paste code below or drag-and-drop a source file to run deterministic AST scans with Semgrep &amp; Bandit,
+              followed by multi-agent Gemini vulnerability explanation and verified remediation.
+            </p>
+          </div>
+
+          {/* Friendly Drag & Drop File Upload Drop-Zone */}
           <FileUploader
             currentFilename={filename}
             onFileLoaded={handleFileLoaded}
@@ -253,35 +376,60 @@ export default function App() {
                 alignItems: 'center',
                 gap: '0.75rem',
                 padding: '0.85rem 1.25rem',
-                backgroundColor: 'var(--status-resolved-bg)',
-                border: '1px solid var(--status-resolved-border)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--status-resolved)',
+                backgroundColor: '#F0FDF4',
+                border: '1px solid #BBF7D0',
+                borderRadius: '12px',
+                color: '#15803D',
                 fontSize: '0.875rem',
-                fontWeight: 500,
+                fontWeight: 600,
+                boxShadow: '0 2px 8px rgba(34, 197, 94, 0.08)',
               }}
             >
-              <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
+              <CheckCircle2 size={18} style={{ flexShrink: 0, color: '#16A34A' }} />
               <span style={{ flex: 1 }}>{fixAppliedMessage}</span>
               <button
                 type="button"
                 onClick={() => setFixAppliedMessage(null)}
-                style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1.2rem', lineHeight: 1 }}
+                style={{ background: 'transparent', border: 'none', color: '#15803D', cursor: 'pointer', fontSize: '1.2rem', lineHeight: 1 }}
               >
                 &times;
               </button>
             </div>
           )}
 
-          {/* Editor Workspace Container */}
+          {/* Cozy Developer Workstation Monitor Container (Inspired by Reference Image 4) */}
           <div
             style={{
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-md)',
+              border: '1px solid #2D2742',
+              borderRadius: '20px',
+              boxShadow: '0 20px 48px rgba(28, 22, 45, 0.14), 0 4px 12px rgba(28, 22, 45, 0.08)',
               overflow: 'hidden',
+              backgroundColor: '#1C1829',
             }}
           >
+            {/* Monitor Bezel Top Bar with Window Control Dots */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.55rem 1rem',
+                backgroundColor: '#161222',
+                borderBottom: '1px solid #28213B',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#F87171' }} />
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#FBBF24' }} />
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#34D399' }} />
+              </div>
+              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: '#7E7399', fontWeight: 500 }}>
+                codeguard-workstation &bull; {filename || 'untitled'}
+              </span>
+              <div style={{ width: '38px' }} /> {/* Spacer */}
+            </div>
+
+            {/* Editor Toolbar */}
             <EditorToolbar
               language={language}
               onLanguageChange={setLanguage}
@@ -298,72 +446,107 @@ export default function App() {
               onAnalyze={handleAnalyze}
               isAnalyzing={status === 'analyzing'}
               isOverLimit={isOverLimit}
+              availableLanguages={availableLanguages}
             />
 
+            {/* Monaco Editor in Dark Workstation Theme */}
             <CodeEditor
               code={code}
               onChange={(newCode) => {
                 setCode(newCode);
                 if (errorMessage) setErrorMessage(null);
               }}
-              language={language === 'auto' ? (detectedLanguage ? detectedLanguage.toLowerCase() : 'python') : language}
+              language={editorLanguage}
               selectedFinding={selectedFinding}
               onFileUpload={handleFileUpload}
               onLoadSample={handleLoadSample}
               isAnalyzing={status === 'analyzing'}
-              height="420px"
+              height="440px"
             />
           </div>
 
-          {/* Pipeline Progress Indicator */}
+          {/* Section 14: Analyzing State */}
           {status === 'analyzing' && (
             <PipelineProgress currentStageIndex={analysisStage} />
           )}
 
-          {/* Results Workspace */}
+          {/* Section 15-18: Results, Finding Detail, Fix View & Verification */}
           {status === 'results' && reviewResult && (
-            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {/* Results Tabs Header */}
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Findings vs Diff Tab Selector */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  borderBottom: '1px solid var(--border-subtle)',
-                  paddingBottom: '0.5rem',
+                  justifyContent: 'space-between',
+                  borderBottom: '1px solid #E8E2F2',
+                  paddingBottom: '0.75rem',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('findings')}
-                  className="btn"
-                  style={{
-                    backgroundColor: activeTab === 'findings' ? 'var(--bg-surface-elevated)' : 'transparent',
-                    color: activeTab === 'findings' ? 'var(--primary)' : 'var(--text-secondary)',
-                    borderColor: activeTab === 'findings' ? 'var(--border-accent)' : 'transparent',
-                    fontSize: '0.875rem',
-                    padding: '0.45rem 1rem',
-                  }}
-                >
-                  <Layers size={15} />
-                  Findings &amp; Analysis ({reviewResult.findings ? reviewResult.findings.length : 0})
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('findings')}
+                    className="btn"
+                    style={{
+                      backgroundColor: activeTab === 'findings' ? '#5E4F98' : '#FFFFFF',
+                      color: activeTab === 'findings' ? '#FFFFFF' : '#58516B',
+                      border: `1px solid ${activeTab === 'findings' ? '#5E4F98' : '#E8E2F2'}`,
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      padding: '0.5rem 1.15rem',
+                      boxShadow: activeTab === 'findings' ? '0 2px 8px rgba(94, 79, 152, 0.2)' : '0 1px 3px rgba(35, 25, 60, 0.04)',
+                    }}
+                  >
+                    <Layers size={15} />
+                    Findings &amp; Analysis ({reviewResult.findings ? reviewResult.findings.length : 0})
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('diff')}
-                  className="btn"
-                  style={{
-                    backgroundColor: activeTab === 'diff' ? 'var(--bg-surface-elevated)' : 'transparent',
-                    color: activeTab === 'diff' ? 'var(--secondary)' : 'var(--text-secondary)',
-                    borderColor: activeTab === 'diff' ? 'var(--secondary-surface)' : 'transparent',
-                    fontSize: '0.875rem',
-                    padding: '0.45rem 1rem',
-                  }}
-                >
-                  <Sparkles size={15} />
-                  Remediation &amp; Diff
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('diff')}
+                    className="btn"
+                    style={{
+                      backgroundColor: activeTab === 'diff' ? '#2C8C7D' : '#FFFFFF',
+                      color: activeTab === 'diff' ? '#FFFFFF' : '#58516B',
+                      border: `1px solid ${activeTab === 'diff' ? '#2C8C7D' : '#E8E2F2'}`,
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      padding: '0.5rem 1.15rem',
+                      boxShadow: activeTab === 'diff' ? '0 2px 8px rgba(44, 140, 125, 0.2)' : '0 1px 3px rgba(35, 25, 60, 0.04)',
+                    }}
+                  >
+                    <Sparkles size={15} />
+                    Remediation &amp; Diff Comparison
+                  </button>
+                </div>
+
+                {reviewResult.summary && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.85rem',
+                      fontSize: '0.825rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <span style={{ color: '#58516B' }}>
+                      Total Issues: <strong style={{ color: '#1A1626' }}>{reviewResult.summary.total_findings}</strong>
+                    </span>
+                    <span style={{ color: '#16A34A' }}>
+                      &bull; {reviewResult.summary.resolved} Resolved
+                    </span>
+                    {reviewResult.summary.unresolved > 0 && (
+                      <span style={{ color: '#DC2626' }}>
+                        &bull; {reviewResult.summary.unresolved} Unresolved
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Tab Content */}
@@ -376,9 +559,10 @@ export default function App() {
                     alignItems: 'start',
                   }}
                 >
+                  {/* Left Column: Structured Findings List */}
                   <div>
-                    <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-                      Detected Issues
+                    <h4 style={{ margin: '0 0 0.85rem', fontSize: '0.95rem', fontWeight: 700, color: '#1A1626' }}>
+                      Detected Issues ({reviewResult.findings?.length || 0})
                     </h4>
                     <FindingsList
                       findings={reviewResult.findings}
@@ -388,71 +572,81 @@ export default function App() {
                     />
                   </div>
 
+                  {/* Right Column: Finding Explanation & Context */}
                   <div>
-                    <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-                      Issue Details &amp; Context
+                    <h4 style={{ margin: '0 0 0.85rem', fontSize: '0.95rem', fontWeight: 700, color: '#1A1626' }}>
+                      Issue Details &amp; Remediation Guidance
                     </h4>
                     <FindingDetail finding={selectedFinding} />
                   </div>
                 </div>
               ) : (
+                /* Diff Viewer (BEFORE / AFTER & Verification State) */
                 <DiffViewer
                   originalCode={code}
                   fixedCode={reviewResult.fixed_code}
                   fixAvailable={reviewResult.fix_available}
                   verificationAvailable={reviewResult.verification_available}
                   warnings={reviewResult.warnings}
+                  summary={reviewResult.summary}
                   onApplyFix={handleApplyFix}
                 />
               )}
             </div>
           )}
 
-          {/* Bottom Feature Badges */}
-          {status !== 'results' && status !== 'analyzing' && (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '1rem',
-                padding: '1rem 1.25rem',
-                backgroundColor: 'var(--bg-surface)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                fontSize: '0.8rem',
-                color: 'var(--text-muted)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
-                <span>🛡️ <strong>Semgrep &amp; Bandit</strong> AST Ground Truth</span>
-                <span>🤖 <strong>3-Agent Gemini</strong> Pipeline</span>
-                <span>⚡ <strong>Empirical</strong> Fix Verification</span>
-              </div>
-              <div>
-                Supported: <strong style={{ color: 'var(--text-primary)' }}>Python (.py)</strong>, <strong style={{ color: 'var(--text-primary)' }}>JavaScript (.js)</strong>
-              </div>
+          {/* Bottom Trust & Architecture Bar (Warm & Clean) */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              padding: '1.25rem 1.5rem',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '16px',
+              border: '1px solid #E8E2F2',
+              fontSize: '0.825rem',
+              color: '#58516B',
+              boxShadow: '0 2px 8px rgba(35, 25, 60, 0.03)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                🛡️ <strong style={{ color: '#1A1626' }}>Semgrep &amp; Bandit</strong> AST Ground Truth
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                🤖 <strong style={{ color: '#1A1626' }}>3-Agent Gemini</strong> Sequential Pipeline
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                ⚡ <strong style={{ color: '#1A1626' }}>Empirical Re-Analysis</strong> Verification
+              </span>
             </div>
-          )}
+
+            <div>
+              Supported: <strong style={{ color: '#5E4F98' }}>Python, JS, TS, Java, C, C++, Go</strong>
+            </div>
+          </div>
         </div>
       </main>
 
-      {/* Footer */}
+      {/* Global Clean Minimal Footer */}
       <footer
         style={{
-          borderTop: '1px solid var(--border-subtle)',
-          padding: '1.25rem 0',
-          backgroundColor: 'var(--bg-surface)',
-          marginTop: 'auto',
+          borderTop: '1px solid #E8E2F2',
+          padding: '1.5rem 0',
+          backgroundColor: '#FFFFFF',
+          position: 'relative',
+          zIndex: 10,
         }}
       >
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            CodeGuard &bull; CodeNeeti Hackathon 2026 &bull; Antigravity Multi-Agent Implementation
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <span style={{ fontSize: '0.8rem', color: '#88809E' }}>
+            CodeGuard &bull; CodeNeeti Hackathon 2026 &bull; Antigravity Multi-Agent Architecture
           </span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-            Sequential Pipeline: Static Analysis &rarr; Analyzer &rarr; Fix &rarr; Verifier &bull; API Contract v1.0
+          <span style={{ fontSize: '0.8rem', color: '#88809E', fontFamily: 'var(--font-mono)' }}>
+            Pipeline: Deterministic AST &rarr; AnalyzerAgent &rarr; FixAgent &rarr; VerifierAgent &bull; API Contract v1.0
           </span>
         </div>
       </footer>

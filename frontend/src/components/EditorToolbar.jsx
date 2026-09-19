@@ -18,6 +18,7 @@ export default function EditorToolbar({
   onAnalyze,
   isAnalyzing = false,
   isOverLimit = false,
+  availableLanguages = null,
 }) {
   const fileInputRef = useRef(null);
 
@@ -38,12 +39,7 @@ export default function EditorToolbar({
     }
   };
 
-  // Supported languages list
-  const langOptions = SUPPORTED_LANGUAGES || [
-    { id: 'auto', display_name: 'Auto-detect' },
-    { id: 'python', display_name: 'Python (.py)' },
-    { id: 'javascript', display_name: 'JavaScript (.js)' },
-  ];
+  const langOptions = availableLanguages || SUPPORTED_LANGUAGES;
 
   return (
     <div
@@ -53,24 +49,21 @@ export default function EditorToolbar({
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '0.75rem',
-        padding: '0.75rem 1rem',
-        backgroundColor: 'var(--bg-surface-elevated)',
-        borderTopLeftRadius: 'var(--radius-lg)',
-        borderTopRightRadius: 'var(--radius-lg)',
-        borderBottom: '1px solid var(--border-subtle)',
+        padding: '0.75rem 1.15rem',
+        backgroundColor: '#1E192C',
+        borderBottom: '1px solid #2F2844',
       }}
     >
       {/* Left controls: Language selection, File upload, Sample loader */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         {/* Language Selection */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <Code2 size={16} style={{ color: 'var(--primary)' }} />
-          <label htmlFor="language-select" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          <Code2 size={15} style={{ color: '#A592D6' }} />
+          <label htmlFor="language-select" style={{ fontSize: '0.8rem', color: '#B3A9C9', fontWeight: 600 }}>
             Language:
           </label>
           <select
             id="language-select"
-            className="select-input"
             value={isAutoDetect ? 'auto' : language}
             onChange={(e) => {
               const val = e.target.value;
@@ -84,12 +77,13 @@ export default function EditorToolbar({
             }}
             disabled={isAnalyzing}
             style={{
-              backgroundColor: 'var(--bg-surface)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-medium)',
-              borderRadius: 'var(--radius-sm)',
+              backgroundColor: '#14111E',
+              color: '#EDE8F8',
+              border: '1px solid #362E4F',
+              borderRadius: '8px',
               padding: '0.35rem 0.65rem',
-              fontSize: '0.85rem',
+              fontSize: '0.825rem',
+              fontWeight: 500,
               outline: 'none',
               cursor: 'pointer',
             }}
@@ -108,11 +102,11 @@ export default function EditorToolbar({
             style={{
               fontSize: '0.75rem',
               fontFamily: 'var(--font-mono)',
-              padding: '0.2rem 0.5rem',
-              borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--secondary-surface)',
-              color: 'var(--secondary)',
-              border: '1px solid rgba(6, 182, 212, 0.3)',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '6px',
+              backgroundColor: 'rgba(44, 140, 125, 0.2)',
+              color: '#4FD1C5',
+              border: '1px solid rgba(44, 140, 125, 0.4)',
             }}
           >
             Detected: {detectedLanguage}
@@ -124,19 +118,30 @@ export default function EditorToolbar({
           <>
             <button
               type="button"
-              className="btn btn-secondary"
               onClick={() => fileInputRef.current?.click()}
               disabled={isAnalyzing}
-              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', gap: '0.35rem' }}
-              title="Upload a .py or .js file (max 100 KB)"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                padding: '0.35rem 0.75rem',
+                backgroundColor: '#272138',
+                color: '#D8D0E8',
+                border: '1px solid #3E3458',
+                borderRadius: '8px',
+                cursor: 'pointer',
+              }}
+              title="Upload a source file (.py, .js, .ts, .java, .c, .cpp, .go)"
             >
-              <Upload size={14} />
+              <Upload size={13} />
               Upload File
             </button>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".py,.js"
+              accept=".py,.pyw,.js,.jsx,.mjs,.cjs,.ts,.tsx,.mts,.cts,.java,.c,.h,.cpp,.cc,.cxx,.hpp,.hh,.hxx,.go"
               style={{ display: 'none' }}
               onChange={handleFileSelect}
             />
@@ -152,11 +157,11 @@ export default function EditorToolbar({
               alignItems: 'center',
               gap: '0.4rem',
               padding: '0.25rem 0.65rem',
-              backgroundColor: 'rgba(99, 102, 241, 0.14)',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
-              borderRadius: 'var(--radius-full)',
+              backgroundColor: '#2F254B',
+              border: '1px solid #4D3C77',
+              borderRadius: '9999px',
               fontSize: '0.75rem',
-              color: 'var(--text-primary)',
+              color: '#EDE8F8',
               fontFamily: 'var(--font-mono)',
             }}
           >
@@ -169,7 +174,7 @@ export default function EditorToolbar({
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--text-muted)',
+                  color: '#A59DB8',
                   cursor: 'pointer',
                   padding: '0 2px',
                   display: 'flex',
@@ -187,13 +192,23 @@ export default function EditorToolbar({
         {onLoadSample && (
           <button
             type="button"
-            className="btn btn-ghost"
             onClick={onLoadSample}
             disabled={isAnalyzing}
-            style={{ fontSize: '0.8rem', padding: '0.35rem 0.65rem', gap: '0.35rem' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              padding: '0.35rem 0.65rem',
+              background: 'transparent',
+              color: '#E07A9F', // Dusty rose
+              border: 'none',
+              cursor: 'pointer',
+            }}
             title="Load benchmark vulnerable sample snippet"
           >
-            <Sparkles size={14} style={{ color: 'var(--secondary)' }} />
+            <Sparkles size={13} />
             Load Sample
           </button>
         )}
@@ -209,7 +224,7 @@ export default function EditorToolbar({
             gap: '0.5rem',
             fontSize: '0.78rem',
             fontFamily: 'var(--font-mono)',
-            color: overSize ? 'var(--severity-critical)' : 'var(--text-muted)',
+            color: overSize ? '#F87171' : '#9288AA',
           }}
         >
           <span>{lines} {lines === 1 ? 'line' : 'lines'}</span>
@@ -218,12 +233,11 @@ export default function EditorToolbar({
           <span>&bull;</span>
           <span
             style={{
-              color: overSize ? 'var(--severity-critical)' : 'var(--text-secondary)',
-              fontWeight: overSize ? 700 : 400,
+              color: overSize ? '#F87171' : '#B8AED0',
+              fontWeight: overSize ? 700 : 500,
               padding: overSize ? '0.1rem 0.4rem' : '0',
-              backgroundColor: overSize ? 'var(--severity-critical-bg)' : 'transparent',
-              borderRadius: 'var(--radius-xs)',
-              border: overSize ? '1px solid var(--severity-critical-border)' : 'none',
+              backgroundColor: overSize ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+              borderRadius: '4px',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.25rem',
@@ -238,10 +252,19 @@ export default function EditorToolbar({
         {chars > 0 && handleClear && (
           <button
             type="button"
-            className="btn btn-ghost"
             onClick={handleClear}
             disabled={isAnalyzing}
-            style={{ fontSize: '0.78rem', padding: '0.35rem 0.55rem', gap: '0.3rem', color: 'var(--text-muted)' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              fontSize: '0.78rem',
+              padding: '0.35rem 0.55rem',
+              background: 'transparent',
+              border: 'none',
+              color: '#9288AA',
+              cursor: 'pointer',
+            }}
             title="Clear editor code"
           >
             <RotateCcw size={12} />
@@ -249,27 +272,37 @@ export default function EditorToolbar({
           </button>
         )}
 
-        {/* Optional inline Analyze button */}
+        {/* Primary Action: ANALYZE CODE */}
         {onAnalyze && (
           <button
             type="button"
             onClick={onAnalyze}
             disabled={chars === 0 || overSize || isAnalyzing}
-            className="btn btn-primary"
             style={{
-              padding: '0.45rem 1.15rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.5rem 1.3rem',
               fontSize: '0.85rem',
-              fontWeight: 600,
+              fontWeight: 700,
+              fontFamily: 'var(--font-sans)',
+              letterSpacing: '0.02em',
+              borderRadius: '9999px',
+              border: 'none',
+              backgroundColor: '#6C5BA8',
+              color: '#FFFFFF',
+              boxShadow: '0 2px 10px rgba(108, 91, 168, 0.35)',
               opacity: chars === 0 || overSize || isAnalyzing ? 0.6 : 1,
               cursor: chars === 0 || overSize || isAnalyzing ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s ease',
             }}
           >
             {isAnalyzing ? (
-              <span className="animate-pulse-glow">Analyzing...</span>
+              <span>Analyzing...</span>
             ) : (
               <>
-                <Play size={14} fill="currentColor" />
-                Analyze Code
+                <Play size={13} fill="currentColor" />
+                ANALYZE CODE
               </>
             )}
           </button>

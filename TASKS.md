@@ -107,6 +107,37 @@ This document is the shared coordination and task ownership board for human oper
 
 ---
 
+### FE-007 — Scroll-Linked Frame Sequence Animation & Interactive Pointer Layer
+**Status:** DONE  
+**Depends on:** `FE-001`, `FE-006`  
+**Files/Area:** `/frontend/**`  
+**Goal:** Implement the 300-frame image sequence as a high-DPI HTML canvas scroll-driven animation with GSAP ScrollTrigger, ASCII preloader, narrative overlay stages, and subtle spider pointer kinematics layer.  
+**Acceptance criteria:**
+- Frame sequence assets discovered and served from `FRAME_FOLDER = "/animation/"`.
+- High-DPI single canvas with `devicePixelRatio` scaling and centered aspect-ratio preservation.
+- ASCII preloader display with frame counter and `SYSTEM READY` status before animation start.
+- GSAP ScrollTrigger pins the section and scrubs frames proportionally across 300 images.
+- 4-phase narrative text overlaid on canvas (Exterior -> Enter Machine -> AST Scan -> AI Reasoning -> Verification).
+- Interactive `SpiderPointerEffect` layer with articulated legs, cursor tracking, and reduced-motion guard.
+- Seamless transition into the complete `#workspace` code review interface.
+
+---
+
+### FE-008 — Visual Refinement: Warm Developer Aesthetic & FlowForge Navigation
+**Status:** DONE  
+**Depends on:** `FE-007`  
+**Files/Area:** `/frontend/**`  
+**Goal:** Visually refine the application away from cyberpunk neon HUD styling toward a warm, creative, developer-focused aesthetic inspired by the personal computer illustration and FlowForge horizontal pill navigation.  
+**Acceptance criteria:**
+- Animation section left 100% locked, untouched, and fully functional.
+- Navigation redesigned into FlowForge-inspired centered floating rounded pill bar (`[ CG ] CODEGUARD | Machine Experience | Review Workspace | Reset | ● OPERATIONAL`).
+- Warm color palette implemented: off-white/cream canvas (`#F8F6FC`), soft lavender (`#EDE8F8`), muted violet (`#5E4F98`), dusty rose, warm peach, and deep navy charcoal text (`#1A1626`).
+- Monaco Editor container styled like a cozy workstation monitor with rounded bezel (`#1C1829`), window control dots (coral, amber, mint), and dark editor surface (`#120F1D`).
+- Cyber spider particles removed from workspace.
+- Findings, remediation, diff, and verification tabs visually refined with calm, trustworthy status pills.
+
+---
+
 ## Backend Workstream
 
 ### BE-001 — Initialize FastAPI Project & Core Configuration

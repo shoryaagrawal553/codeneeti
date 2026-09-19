@@ -119,6 +119,20 @@ def test_validation_valid_javascript_request():
     assert response.status_code == 200
 
 
+def test_validation_valid_additional_languages():
+    """Verify valid requests for TypeScript, Java, C, C++, and Go pass validation."""
+    cases = [
+        ("typescript", "const msg: string = 'test';", "app.ts"),
+        ("java", "public class Main { public static void main(String[] args) {} }", "Main.java"),
+        ("c", "int main() { return 0; }", "main.c"),
+        ("cpp", "#include <iostream>\nint main() { return 0; }", "main.cpp"),
+        ("go", "package main\nfunc main() {}", "main.go"),
+    ]
+    for lang, code, fname in cases:
+        resp = client.post("/api/analyze", json={"code": code, "language": lang, "filename": fname})
+        assert resp.status_code == 200, f"Language {lang} failed validation with status {resp.status_code}"
+
+
 def test_refine_endpoint_validation_empty_instruction():
     """Verify POST /api/refine rejects empty instruction."""
     payload = {

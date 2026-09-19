@@ -1,120 +1,191 @@
 import React from 'react';
+import { RefreshCw } from 'lucide-react';
 
-export default function Header({ onReset, onGoToLanding, backendHealth }) {
+/**
+ * FlowForge-Inspired Clean Horizontal Pill Navigation Bar
+ * Reference: input_file_3.png
+ * [ CODEGUARD ]   Machine Experience   Review Workspace   Reset   ● OPERATIONAL
+ */
+export default function Header({ onReset, onScrollToHero, onScrollToWorkspace, backendHealth }) {
   const isOnline = backendHealth?.status === 'ok';
 
   return (
     <header
       style={{
-        borderBottom: '1px solid var(--border-subtle)',
-        borderTop: '1px solid var(--border-top-highlight)',
-        backgroundColor: 'var(--bg-surface-glass)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        padding: '0.85rem 0',
+        top: '1.25rem',
+        zIndex: 100,
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '0 1rem',
+        pointerEvents: 'none', // Allow clicking through outside the pill
       }}
     >
-      <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {/* Brand */}
+      <nav
+        aria-label="Primary Navigation"
+        style={{
+          pointerEvents: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.5rem',
+          backgroundColor: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid #E8E2F2',
+          borderRadius: '9999px',
+          padding: '0.5rem 1.25rem 0.5rem 1.25rem',
+          boxShadow: '0 4px 24px rgba(35, 25, 60, 0.08), 0 1px 4px rgba(35, 25, 60, 0.04)',
+          width: '100%',
+          maxWidth: '960px',
+        }}
+      >
+        {/* Brand: Clean, bold, developer-focused */}
         <div
-          onClick={onReset}
+          onClick={onScrollToHero || onReset}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem',
+            gap: '0.65rem',
             cursor: 'pointer',
             userSelect: 'none',
           }}
         >
           <div
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+              width: '28px',
+              height: '28px',
+              borderRadius: '8px',
+              backgroundColor: '#5E4F98',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: 'var(--shadow-glow)',
-              fontWeight: 700,
-              color: '#ffffff',
-              fontSize: '1.05rem',
+              fontWeight: 800,
+              color: '#FFFFFF',
+              fontSize: '0.8rem',
               letterSpacing: '-0.02em',
-              borderTop: '1px solid rgba(255, 255, 255, 0.35)',
             }}
           >
             CG
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700, letterSpacing: '-0.025em' }}>
-                CodeGuard
-              </h1>
-              <span
-                style={{
-                  fontSize: '0.7rem',
-                  fontFamily: 'var(--font-mono)',
-                  padding: '0.1rem 0.45rem',
-                  borderRadius: 'var(--radius-xs)',
-                  backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                  color: 'var(--primary)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                }}
-              >
-                v1.0
-              </span>
-            </div>
-            <p style={{ fontSize: '0.75rem', margin: 0, color: 'var(--text-muted)' }}>
-              AI Code Review &amp; Security Assistant
-            </p>
-          </div>
+          <span
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 800,
+              fontSize: '1rem',
+              letterSpacing: '0.04em',
+              color: '#1A1626',
+            }}
+          >
+            CODEGUARD
+          </span>
         </div>
 
-        {/* Navigation & Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          {onGoToLanding && (
+        {/* Horizontal Navigation Links */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+          {onScrollToHero && (
             <button
               type="button"
-              className="btn btn-ghost"
-              onClick={onGoToLanding}
-              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', gap: '0.4rem' }}
-              title="Return to pixel-art meadow landing page"
+              onClick={onScrollToHero}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: '#58516B',
+                cursor: 'pointer',
+                padding: '0.3rem 0.5rem',
+                borderRadius: '6px',
+                transition: 'color 0.15s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#5E4F98')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#58516B')}
             >
-              <span>🌿</span>
-              <span>Meadow</span>
+              Machine Experience
             </button>
           )}
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.35rem 0.75rem',
-              backgroundColor: isOnline ? 'rgba(16, 185, 129, 0.1)' : 'rgba(99, 102, 241, 0.1)',
-              border: `1px solid ${isOnline ? 'rgba(16, 185, 129, 0.25)' : 'rgba(99, 102, 241, 0.25)'}`,
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem',
-              color: isOnline ? 'var(--status-resolved)' : 'var(--primary)',
-              fontWeight: 500,
-            }}
-          >
-            <span
+          {onScrollToWorkspace && (
+            <button
+              type="button"
+              onClick={onScrollToWorkspace}
               style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: isOnline ? 'var(--status-resolved)' : 'var(--primary)',
-                boxShadow: `0 0 6px ${isOnline ? 'var(--status-resolved)' : 'var(--primary)'}`,
+                background: 'transparent',
+                border: 'none',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: '#58516B',
+                cursor: 'pointer',
+                padding: '0.3rem 0.5rem',
+                borderRadius: '6px',
+                transition: 'color 0.15s ease',
               }}
-            ></span>
-            {isOnline ? 'Backend Online' : 'Mock Mode Active'}
-          </div>
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#5E4F98')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#58516B')}
+            >
+              Review Workspace
+            </button>
+          )}
+
+          {onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                color: '#88809E',
+                cursor: 'pointer',
+                padding: '0.3rem 0.5rem',
+                borderRadius: '6px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                transition: 'color 0.15s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#1A1626')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#88809E')}
+              title="Reset code and clear findings"
+            >
+              <RefreshCw size={13} />
+              Reset
+            </button>
+          )}
         </div>
-      </div>
+
+        {/* Right Status Pill: FlowForge-Style Operational Badge */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            padding: '0.3rem 0.75rem',
+            backgroundColor: isOnline ? '#ECFDF5' : '#F5F3FF',
+            border: `1px solid ${isOnline ? '#A7F3D0' : '#DDD6FE'}`,
+            borderRadius: '9999px',
+            fontSize: '0.75rem',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            color: isOnline ? '#059669' : '#6D28D9',
+          }}
+        >
+          <span
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: isOnline ? '#10B981' : '#7C3AED',
+            }}
+          />
+          {isOnline ? 'OPERATIONAL' : 'MOCK MODE'}
+        </div>
+      </nav>
     </header>
   );
 }

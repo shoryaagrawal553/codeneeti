@@ -17,8 +17,27 @@ export default function CodeEditor({
   const editorRef = useRef(null);
   const decorationsRef = useRef([]);
 
-  // Monaco language identifier mapping
-  const monacoLanguage = language === 'javascript' ? 'javascript' : 'python';
+  // Monaco language identifier mapping for all 7 supported languages
+  const getMonacoLanguage = (lang) => {
+    switch (lang?.toLowerCase()) {
+      case 'javascript':
+        return 'javascript';
+      case 'typescript':
+        return 'typescript';
+      case 'java':
+        return 'java';
+      case 'c':
+        return 'c';
+      case 'cpp':
+        return 'cpp';
+      case 'go':
+        return 'go';
+      case 'python':
+      default:
+        return 'python';
+    }
+  };
+  const monacoLanguage = getMonacoLanguage(language);
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -28,10 +47,11 @@ export default function CodeEditor({
       inherit: true,
       rules: [],
       colors: {
-        'editor.background': '#0c121e',
-        'editor.lineHighlightBackground': '#1a243d55',
-        'editorLineNumber.foreground': '#64748b',
-        'editorLineNumber.activeForeground': '#94a3b8',
+        'editor.background': '#120F1D',
+        'editor.lineHighlightBackground': '#1E192D',
+        'editorLineNumber.foreground': '#544A6E',
+        'editorLineNumber.activeForeground': '#B3A9C9',
+        'editorCursor.foreground': '#A592D6',
       },
     });
 

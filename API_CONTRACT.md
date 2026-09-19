@@ -133,14 +133,14 @@ All error responses across all endpoints adhere to a uniform structure:
 
 #### Request Fields
 - `code` (*string, required*): The raw source code to analyze. Minimum length 1 character, maximum size 100 KB (102,400 bytes).
-- `language` (*string, optional*): Programming language identifier. Allowed values: `"python"`, `"javascript"`, `"auto"`. Default: `"auto"`.
+- `language` (*string, optional*): Programming language identifier. Allowed values: `"python"`, `"javascript"`, `"typescript"`, `"java"`, `"c"`, `"cpp"`, `"go"`, `"auto"`. Default: `"auto"`.
 - `filename` (*string, optional*): Name of uploaded file. Used as a deterministic fallback hint for language detection when `language` is `"auto"`.
 
 #### Validation Rules
 1. If `code` is missing or empty, return `400 MISSING_CODE`.
 2. If UTF-8 byte length of `code` exceeds 102,400 bytes, return `400 CODE_TOO_LARGE`.
-3. If `language` is provided and not in `["python", "javascript", "auto"]`, return `400 UNSUPPORTED_LANGUAGE`.
-4. If `filename` is provided, extension must be `.py` or `.js` (case-insensitive); otherwise return `400 UNSUPPORTED_FILE_TYPE`.
+3. If `language` is provided and not in `["python", "javascript", "typescript", "java", "c", "cpp", "go", "auto"]`, return `400 UNSUPPORTED_LANGUAGE`.
+4. If `filename` is provided, extension must match a supported language (`.py`, `.js`, `.ts`, `.java`, `.c`, `.cpp`, `.go`, etc., case-insensitive); otherwise return `400 UNSUPPORTED_FILE_TYPE`.
 
 #### Response (200 OK)
 Returns a complete `ReviewResult` object:

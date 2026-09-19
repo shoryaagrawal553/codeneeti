@@ -55,10 +55,7 @@ export async function getHealth() {
 export async function getLanguages() {
   if (USE_MOCKS) {
     return {
-      languages: [
-        { id: 'python', display_name: 'Python', extensions: ['.py'] },
-        { id: 'javascript', display_name: 'JavaScript', extensions: ['.js'] },
-      ],
+      languages: SUPPORTED_LANGUAGES.filter((l) => l.id !== 'auto'),
     };
   }
 
@@ -75,10 +72,7 @@ export async function getLanguages() {
   } catch {
     // Return contract default if backend is not yet running
     return {
-      languages: [
-        { id: 'python', display_name: 'Python', extensions: ['.py'] },
-        { id: 'javascript', display_name: 'JavaScript', extensions: ['.js'] },
-      ],
+      languages: SUPPORTED_LANGUAGES.filter((l) => l.id !== 'auto'),
     };
   }
 }
@@ -102,10 +96,20 @@ export async function analyzeCode({ code, language = 'auto', filename = null }) 
     throw new ApiError('CODE_TOO_LARGE', ERROR_CODES.CODE_TOO_LARGE, 400);
   }
 
-  // Client-side guard 3: Filename extension validation
+  // Client-side guard 3: Filename extension validation across all 7 supported languages
   if (filename) {
     const lowerName = filename.toLowerCase();
-    if (!lowerName.endsWith('.py') && !lowerName.endsWith('.js')) {
+    const validExtensions = [
+      '.py', '.pyw',
+      '.js', '.jsx', '.mjs', '.cjs',
+      '.ts', '.tsx', '.mts', '.cts',
+      '.java',
+      '.c', '.h',
+      '.cpp', '.cc', '.cxx', '.hpp', '.hh', '.hxx',
+      '.go',
+    ];
+    const hasValidExt = validExtensions.some((ext) => lowerName.endsWith(ext));
+    if (!hasValidExt) {
       throw new ApiError('UNSUPPORTED_FILE_TYPE', ERROR_CODES.UNSUPPORTED_FILE_TYPE, 400);
     }
   }

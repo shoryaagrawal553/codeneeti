@@ -5,6 +5,9 @@ rules:
           - pattern: $DB.Query(fmt.Sprintf("...", ...))
           - pattern: $DB.QueryRow(fmt.Sprintf("...", ...))
           - pattern: $DB.Exec(fmt.Sprintf("...", ...))
+          - pattern: $DB.Query($X + ...)
+          - pattern: $DB.QueryRow($X + ...)
+          - pattern: $DB.Exec($X + ...)
           - pattern: $DB.Query("..." + $VAR)
     message: "Potential SQL Injection detected via unescaped string formatting in Go database query."
     languages: [go]

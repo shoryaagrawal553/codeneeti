@@ -12,6 +12,8 @@ export default function DiffViewer({
   verificationAvailable = true,
   warnings = [],
   summary,
+  findings = [],
+  onSelectFinding,
   onApplyFix,
 }) {
   const [copied, setCopied] = useState(false);
@@ -36,37 +38,149 @@ export default function DiffViewer({
     setTimeout(() => setApplied(false), 2500);
   };
 
+  // Helper to sanitize warnings and remove raw URLs or technical artifacts
+  const cleanWarningText = (text) => {
+    if (!text || typeof text !== 'string') return '';
+    const noUrls = text.replace(/https?:\/\/\S+/g, '').replace(/<\w+\s+of\s+RPC[^>]+>/g, '').trim();
+    return noUrls.splitlines ? noUrls.splitlines()[0] : noUrls.split('\n')[0];
+  };
+
   // Degraded state: Fix not available
   if (!fixAvailable || !fixedCode) {
     return (
-      <div className="card" style={{ padding: '2.5rem 1.5rem', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '16px' }}>
-        <AlertTriangle size={36} style={{ color: '#D97706', marginBottom: '0.75rem' }} />
-        <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#1A1626' }}>Automated Fix Unavailable</h4>
-        <p style={{ fontSize: '0.9rem', marginTop: '0.45rem', maxWidth: '520px', marginInline: 'auto', color: '#58516B' }}>
-          The Fix Agent was unable to produce a safe automated repair for this snippet.
-          Please refer to the finding explanations to apply remediation manually.
-        </p>
-        {warnings && warnings.length > 0 && (
-          <div
-            style={{
-              marginTop: '1.25rem',
-              padding: '0.85rem 1.25rem',
-              backgroundColor: '#F8F6FC',
-              borderRadius: '12px',
-              fontSize: '0.825rem',
-              color: '#58516B',
-              textAlign: 'left',
-              maxWidth: '600px',
-              marginInline: 'auto',
-              border: '1px solid #E8E2F2',
-            }}
-          >
-            <strong style={{ color: '#1A1626' }}>System Diagnostics:</strong>
-            <ul style={{ paddingLeft: '1.25rem', marginTop: '0.35rem', lineHeight: 1.5 }}>
-              {warnings.map((w, i) => (
-                <li key={i}>{w}</li>
-              ))}
-            </ul>
+      <div className="card" style={{ padding: '2rem 1.5rem', backgroundColor: '#FFFFFF', borderRadius: '16px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+          <AlertTriangle size={36} style={{ color: '#D97706', marginBottom: '0.75rem' }} />
+          <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#1A1626' }}>
+            Automated Fix Unavailable
+          </h4>
+          <p style={{ fontSize: '0.925rem', marginTop: '0.5rem', maxWidth: '580px', marginInline: 'auto', color: '#58516B', lineHeight: 1.55 }}>
+            Static analysis completed successfully. Automated AI code repair is temporarily unavailable due to API rate limits.
+            Detailed manual remediation guidance for each detected issue is provided below.
+          </p>
+
+          {warnings && warnings.length > 0 && (
+            <div
+              style={{
+                marginTop: '1rem',
+                padding: '0.65rem 1rem',
+                backgroundColor: '#FFFBEB',
+                border: '1px solid #FDE68A',
+                borderRadius: '10px',
+                fontSize: '0.8rem',
+                color: '#92400E',
+                maxWidth: '620px',
+                marginInline: 'auto',
+                textAlign: 'left',
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: '0.25rem' }}>System Status:</strong>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: 1.4 }}>
+                {warnings.map((w, i) => (
+                  <li key={i}>{cleanWarningText(w)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Structured Manual Remediation Guidance per Finding */}
+        {findings && findings.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E8E2F2', paddingBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1A1626', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Manual Remediation Guidance ({findings.length} Issue{findings.length > 1 ? 's' : ''})
+              </span>
+              <span style={{ fontSize: '0.775rem', color: '#7E7694' }}>
+                Follow recommended patterns to resolve issues directly in the editor
+              </span>
+            </div>
+
+            {findings.map((f, idx) => (
+              <div
+                key={f.id || idx}
+                style={{
+                  padding: '1.25rem',
+                  backgroundColor: '#F8F6FC',
+                  borderRadius: '12px',
+                  border: '1px solid #E8E2F2',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '6px',
+                        backgroundColor: f.severity === 'Critical' ? '#FEF2F2' : f.severity === 'High' ? '#FFF1F2' : '#FFFBEB',
+                        color: f.severity === 'Critical' ? '#DC2626' : f.severity === 'High' ? '#E11D48' : '#D97706',
+                        border: '1px solid currentColor',
+                      }}
+                    >
+                      {f.severity}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#58516B' }}>
+                      Lines {f.line_start}{f.line_end && f.line_end !== f.line_start ? `–${f.line_end}` : ''}
+                    </span>
+                    {f.cwe && (
+                      <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', padding: '0.15rem 0.45rem', backgroundColor: '#EDE8F8', borderRadius: '4px', color: '#5E4F98' }}>
+                        {f.cwe}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: '#8C82A3' }}>
+                      {f.rule_id}
+                    </span>
+                  </div>
+
+                  {onSelectFinding && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectFinding(f)}
+                      style={{
+                        padding: '0.3rem 0.75rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        backgroundColor: '#5E4F98',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Locate in Editor →
+                    </button>
+                  )}
+                </div>
+
+                <h5 style={{ margin: 0, fontSize: '0.975rem', fontWeight: 700, color: '#1A1626' }}>
+                  {f.title}
+                </h5>
+
+                <div
+                  style={{
+                    fontSize: '0.85rem',
+                    lineHeight: 1.6,
+                    color: '#342F42',
+                    backgroundColor: '#FFFFFF',
+                    padding: '0.85rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid #E8E2F2',
+                    whiteSpace: 'pre-line',
+                  }}
+                >
+                  {f.explanation}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', color: '#7E7694', fontSize: '0.875rem', marginTop: '1rem' }}>
+            No static code issues detected in this snippet.
           </div>
         )}
       </div>

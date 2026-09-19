@@ -17,7 +17,7 @@ from typing import List, Optional, Tuple
 
 import google.generativeai as genai
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .analyzers import RawFinding, run_static_analysis
 from .config import settings
@@ -42,16 +42,56 @@ if settings.GEMINI_API_KEY:
 
 
 class EnrichedItem(BaseModel):
-    """Enrichment output structure for a single finding."""
+    """Enrichment output structure for a single finding with resilient value normalization."""
 
     id: str
     title: str
     explanation: str
-    severity: SeverityLevel
-    category: CategoryLevel
+    severity: SeverityLevel = "Medium"
+    category: CategoryLevel = "Security"
     cwe: Optional[str] = None
-    confidence: ConfidenceLevel
+    confidence: ConfidenceLevel = "High"
     is_false_positive: bool = False
+
+    @field_validator("severity", mode="before")
+    @classmethod
+    def norm_severity(cls, v):
+        if not v:
+            return "Medium"
+        v_clean = str(v).strip().capitalize()
+        if v_clean in ("Critical", "High", "Medium", "Low", "Info"):
+            return v_clean
+        if "crit" in v_clean.lower():
+            return "Critical"
+        if "err" in v_clean.lower() or "high" in v_clean.lower():
+            return "High"
+        if "warn" in v_clean.lower():
+            return "Medium"
+        return "Medium"
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def norm_category(cls, v):
+        if not v:
+            return "Security"
+        v_clean = str(v).strip().title()
+        if v_clean in ("Security", "Bug", "Code Quality"):
+            return v_clean
+        if "qual" in v_clean.lower() or "style" in v_clean.lower():
+            return "Code Quality"
+        if "bug" in v_clean.lower() or "logic" in v_clean.lower():
+            return "Bug"
+        return "Security"
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def norm_confidence(cls, v):
+        if not v:
+            return "High"
+        v_clean = str(v).strip().capitalize()
+        if v_clean in ("High", "Medium", "Low"):
+            return v_clean
+        return "High"
 
 
 class GeminiEnrichedItem(BaseModel):
@@ -60,10 +100,10 @@ class GeminiEnrichedItem(BaseModel):
     id: str
     title: str
     explanation: str
-    severity: SeverityLevel
-    category: CategoryLevel
+    severity: str
+    category: str
     cwe: Optional[str]
-    confidence: ConfidenceLevel
+    confidence: str
     is_false_positive: bool
 
 
@@ -92,6 +132,118 @@ class FixOutput(BaseModel):
     fixed_code: str
     fix_summary: str = ""
 
+
+
+def _clean_gemini_error(err: Exception) -> str:
+    """Sanitize and format Gemini API error into a user-friendly application message."""
+    err_str = str(err)
+    if "429" in err_str or "ResourceExhausted" in err_str or "quota" in err_str.lower():
+        return "AI service rate limit / quota exceeded"
+    clean = re.sub(r"https?://\S+", "", err_str)
+    first_line = clean.splitlines()[0].strip() if clean else ""
+    first_line = re.sub(r"^<\w+\s+of\s+RPC\s+that\s+terminated\s+with:\s*", "", first_line)
+    return first_line[:120] if first_line else "AI service temporarily unavailable"
+
+
+def _get_fallback_guidance(rule_id: str, message: str, cwe_str: Optional[str] = None) -> Tuple[str, str, Optional[str]]:
+    """Return (title, explanation, cwe) with structured deterministic remediation guidance."""
+    rule_lower = rule_id.lower()
+    msg_lower = message.lower()
+
+    if "b608" in rule_lower or "sqli" in rule_lower or "sql" in msg_lower:
+        return (
+            "SQL Injection Vulnerability",
+            (
+                "What is wrong: Direct string formatting or variable interpolation is used to construct an SQL query string.\n\n"
+                "Why it is dangerous: An attacker can manipulate input values to execute unauthorized SQL statements, bypassing authentication or reading/altering database records (CWE-89).\n\n"
+                "How to fix: Use parameterized query placeholders (e.g. ? or %s) and pass variables as bound parameters.\n\n"
+                "Recommended Safe Pattern: cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))"
+            ),
+            cwe_str or "CWE-89",
+        )
+
+    if "eval" in rule_lower or "eval" in msg_lower:
+        return (
+            "Insecure Dynamic Code Execution via eval()",
+            (
+                "What is wrong: Dynamic code evaluation function eval() is executed on input.\n\n"
+                "Why it is dangerous: Can allow arbitrary remote code execution (RCE) in the application runtime environment (CWE-95).\n\n"
+                "How to fix: Replace eval() with safe parsing utilities like JSON.parse() or dedicated domain-specific parsers.\n\n"
+                "Recommended Safe Pattern: const data = JSON.parse(userInput);"
+            ),
+            cwe_str or "CWE-95",
+        )
+
+    if "strcpy" in rule_lower or "strcpy" in msg_lower:
+        return (
+            "Unbounded String Copy Buffer Overflow",
+            (
+                "What is wrong: The strcpy() function performs unbounded byte copying into a fixed-size buffer.\n\n"
+                "Why it is dangerous: Exceeding destination capacity corrupts process memory and stack frames, enabling buffer overflow exploits (CWE-120).\n\n"
+                "How to fix: Use bounded string copy functions like strncpy() or snprintf(), ensuring explicit null-termination.\n\n"
+                "Recommended Safe Pattern: strncpy(dest, src, sizeof(dest) - 1); dest[sizeof(dest) - 1] = '\\0';"
+            ),
+            cwe_str or "CWE-120",
+        )
+
+    if "gets" in rule_lower or "gets" in msg_lower:
+        return (
+            "Dangerous Unbounded Standard Input (gets)",
+            (
+                "What is wrong: The deprecated gets() function reads standard input without buffer length validation.\n\n"
+                "Why it is dangerous: Guarantees a buffer overflow when user input exceeds destination memory size (CWE-120).\n\n"
+                "How to fix: Replace gets() with fgets(), explicitly specifying the buffer size limit and input stream.\n\n"
+                "Recommended Safe Pattern: fgets(buffer, sizeof(buffer), stdin);"
+            ),
+            cwe_str or "CWE-120",
+        )
+
+    if "innerhtml" in rule_lower or "xss" in rule_lower:
+        return (
+            "Cross-Site Scripting (XSS) via innerHTML",
+            (
+                "What is wrong: Direct assignment of unescaped content to innerHTML.\n\n"
+                "Why it is dangerous: Allows attackers to inject malicious HTML/JavaScript executing in victims' browser sessions (CWE-79).\n\n"
+                "How to fix: Use textContent / innerText or sanitize HTML with DOMPurify.\n\n"
+                "Recommended Safe Pattern: element.textContent = userInput;"
+            ),
+            cwe_str or "CWE-79",
+        )
+
+    if "command" in rule_lower or "system" in rule_lower or "exec" in rule_lower:
+        return (
+            "OS Command Injection",
+            (
+                "What is wrong: Untrusted parameter passed into an OS command execution interface.\n\n"
+                "Why it is dangerous: Can allow arbitrary shell command execution on the host machine (CWE-78).\n\n"
+                "How to fix: Pass command arguments as discrete array elements rather than concatenated shell strings.\n\n"
+                "Recommended Safe Pattern: Use subprocess.run(['cmd', arg], shell=False)"
+            ),
+            cwe_str or "CWE-78",
+        )
+
+    if "password" in rule_lower or "secret" in rule_lower or "token" in rule_lower:
+        return (
+            "Hardcoded Secret or Credential",
+            (
+                "What is wrong: Sensitive authentication token, key, or password embedded in source code.\n\n"
+                "Why it is dangerous: Secrets stored in source code can be extracted by unauthorized users or repository commit history (CWE-798).\n\n"
+                "How to fix: Externalize credentials into environment variables or a secret management service.\n\n"
+                "Recommended Safe Pattern: secret = os.environ.get('API_SECRET')"
+            ),
+            cwe_str or "CWE-798",
+        )
+
+    return (
+        f"Issue detected: {rule_id}",
+        (
+            f"What is wrong: {message}\n\n"
+            f"Why it is dangerous: Static analysis flagged this pattern as a security vulnerability or reliability risk.\n\n"
+            f"How to fix: Review the flagged lines and apply defensive input validation, parameterization, and bounds checking.\n\n"
+            f"Recommended Safe Pattern: Follow security guidelines for rule {rule_id}."
+        ),
+        cwe_str,
+    )
 
 
 class AnalyzerAgent:
@@ -147,7 +299,7 @@ class AnalyzerAgent:
             "You are provided with verified static analysis findings from deterministic scanners.\n"
             "Enrich each finding with:\n"
             "- title: Clear, concise title\n"
-            "- explanation: Plain-language developer explanation of what is wrong and why it matters\n"
+            "- explanation: Plain-language developer explanation of what is wrong, why it is dangerous, and how to fix it\n"
             "- severity: Critical, High, Medium, Low, or Info (adjust based on code context)\n"
             "- category: Security, Bug, or Code Quality\n"
             "- cwe: Standard CWE ID (e.g., CWE-89, CWE-798, CWE-120) if applicable\n"
@@ -157,9 +309,7 @@ class AnalyzerAgent:
             "Respond ONLY with valid JSON matching the schema."
         )
 
-        # Prevent prompt injection delimiter breakout attacks (case-insensitive)
         safe_code = re.sub(r"</?code_to_analyze>", r"<\\/code_to_analyze>", code, flags=re.IGNORECASE)
-
 
         user_prompt = (
             f"Language: {language}\n"
@@ -167,102 +317,115 @@ class AnalyzerAgent:
             f"Static findings to enrich:\n{json.dumps(findings_summary, indent=2)}"
         )
 
+        models_to_try = [self.model_name]
+        if self.model_name != "gemini-3.1-flash-lite":
+            models_to_try.append("gemini-3.1-flash-lite")
 
-        try:
-            model = genai.GenerativeModel(
-                model_name=self.model_name,
-                system_instruction=system_instruction,
-                generation_config={
-                    "response_mime_type": "application/json",
-                    "response_schema": GeminiAnalyzerOutput,
-                    "temperature": 0.1,
+        last_err: Optional[Exception] = None
+        for m_name in models_to_try:
+            try:
+                model = genai.GenerativeModel(
+                    model_name=m_name,
+                    system_instruction=system_instruction,
+                    generation_config={
+                        "response_mime_type": "application/json",
+                        "response_schema": GeminiAnalyzerOutput,
+                        "temperature": 0.1,
+                    },
+                )
 
-                },
-            )
+                response = await asyncio.wait_for(
+                    model.generate_content_async(user_prompt),
+                    timeout=float(settings.GEMINI_TIMEOUT_SECONDS),
+                )
 
-            response = await asyncio.wait_for(
-                model.generate_content_async(user_prompt),
-                timeout=float(settings.GEMINI_TIMEOUT_SECONDS),
-            )
+                data = json.loads(response.text)
+                parsed = AnalyzerOutput.model_validate(data)
 
-            data = json.loads(response.text)
-            parsed = AnalyzerOutput.model_validate(data)
+                enriched_map = {}
+                for item in parsed.findings:
+                    enriched_map[item.id] = item
+                    enriched_map[item.id.replace("_", "-").lower()] = item
 
-            # Map enriched results back to Finding models with case-resilient IDs
-            enriched_map = {}
-            for item in parsed.findings:
-                enriched_map[item.id] = item
-                enriched_map[item.id.replace("_", "-").lower()] = item
+                final_findings: List[Finding] = []
 
-            final_findings: List[Finding] = []
+                for raw in raw_findings:
+                    enriched = enriched_map.get(raw.id) or enriched_map.get(raw.id.replace("_", "-").lower())
 
-            for raw in raw_findings:
-                enriched = enriched_map.get(raw.id) or enriched_map.get(raw.id.replace("_", "-").lower())
-                
-                # Defense against prompt injection blinding: do not drop finding, retain with Low confidence
-                if enriched and enriched.is_false_positive:
+                    if enriched and enriched.is_false_positive:
+                        final_findings.append(
+                            Finding(
+                                id=raw.id,
+                                line_start=raw.line_start,
+                                line_end=raw.line_end,
+                                rule_id=raw.rule_id,
+                                severity="Info",
+                                title=f"[Possible False Positive] {enriched.title}",
+                                explanation=f"{enriched.explanation} (Note: Flagged by AI analyzer as potential false positive; verified deterministically by scanner).",
+                                category=enriched.category,
+                                cwe=enriched.cwe or raw.cwe,
+                                confidence="Low",
+                                verification_status="Unavailable",
+                                fingerprint=raw.fingerprint,
+                            )
+                        )
+                        warnings.append(f"Finding {raw.id} ({raw.rule_id}) flagged by AI as potential false positive; retained with Low confidence.")
+                        continue
+
+                    fallback_title, fallback_explanation, fallback_cwe = _get_fallback_guidance(raw.rule_id, raw.message, raw.cwe)
+
                     final_findings.append(
                         Finding(
                             id=raw.id,
                             line_start=raw.line_start,
                             line_end=raw.line_end,
                             rule_id=raw.rule_id,
-                            severity="Info",
-                            title=f"[Possible False Positive] {enriched.title}",
-                            explanation=f"{enriched.explanation} (Note: Flagged by AI analyzer as potential false positive; verified deterministically by scanner).",
-                            category=enriched.category,
-                            cwe=enriched.cwe or raw.cwe,
-                            confidence="Low",
+                            severity=enriched.severity if enriched else raw.severity,
+                            title=enriched.title if enriched else fallback_title,
+                            explanation=enriched.explanation if enriched else fallback_explanation,
+                            category=enriched.category if enriched else "Security",
+                            cwe=enriched.cwe if (enriched and enriched.cwe) else (fallback_cwe or raw.cwe),
+                            confidence=enriched.confidence if enriched else raw.confidence,
                             verification_status="Unavailable",
                             fingerprint=raw.fingerprint,
                         )
                     )
-                    warnings.append(f"Finding {raw.id} ({raw.rule_id}) flagged by AI as potential false positive; retained with Low confidence.")
-                    continue
 
-                final_findings.append(
-                    Finding(
-                        id=raw.id,
-                        line_start=raw.line_start,
-                        line_end=raw.line_end,
-                        rule_id=raw.rule_id,
-                        severity=enriched.severity if enriched else raw.severity,
-                        title=enriched.title if enriched else f"Issue detected: {raw.rule_id}",
-                        explanation=enriched.explanation if enriched else raw.message,
-                        category=enriched.category if enriched else "Security",
-                        cwe=enriched.cwe if (enriched and enriched.cwe) else raw.cwe,
-                        confidence=enriched.confidence if enriched else raw.confidence,
-                        verification_status="Unavailable",
-                        fingerprint=raw.fingerprint,
-                    )
-                )
+                return final_findings, warnings
 
-            return final_findings, warnings
+            except Exception as err:
+                last_err = err
+                err_clean = _clean_gemini_error(err)
+                logger.warning(f"Analyzer Agent attempt on {m_name} failed: {err_clean}")
+                if "rate limit" not in err_clean and "quota" not in err_clean:
+                    break
 
-        except Exception as err:
-            logger.warning(f"Analyzer Agent failed: {err}. Falling back to deterministic findings.")
-            warnings.append(f"Enrichment degraded: {str(err).splitlines()[0] if str(err) else 'Gemini error'}")
-            return self._fallback_enrichment(raw_findings), warnings
+        clean_msg = _clean_gemini_error(last_err) if last_err else "AI service temporarily unavailable"
+        warnings.append(f"AI enrichment temporarily unavailable: {clean_msg}. Deterministic static findings preserved with manual remediation guidance.")
+        return self._fallback_enrichment(raw_findings), warnings
 
     def _fallback_enrichment(self, raw_findings: List[RawFinding]) -> List[Finding]:
-        """Produce standard Finding objects directly from static scanner data without LLM."""
-        return [
-            Finding(
-                id=raw.id,
-                line_start=raw.line_start,
-                line_end=raw.line_end,
-                rule_id=raw.rule_id,
-                severity=raw.severity,
-                title=f"Issue detected: {raw.rule_id}",
-                explanation=raw.message,
-                category="Security",
-                cwe=raw.cwe,
-                confidence=raw.confidence,
-                verification_status="Unavailable",
-                fingerprint=raw.fingerprint,
+        """Produce standard Finding objects directly from static scanner data with rich remediation guidance."""
+        results = []
+        for raw in raw_findings:
+            title, explanation, cwe = _get_fallback_guidance(raw.rule_id, raw.message, raw.cwe)
+            results.append(
+                Finding(
+                    id=raw.id,
+                    line_start=raw.line_start,
+                    line_end=raw.line_end,
+                    rule_id=raw.rule_id,
+                    severity=raw.severity,
+                    title=title,
+                    explanation=explanation,
+                    category="Security",
+                    cwe=cwe or raw.cwe,
+                    confidence=raw.confidence,
+                    verification_status="Unavailable",
+                    fingerprint=raw.fingerprint,
+                )
             )
-            for raw in raw_findings
-        ]
+        return results
 
 
 class FixAgent:
@@ -334,39 +497,49 @@ class FixAgent:
         )
 
 
-        try:
-            model = genai.GenerativeModel(
-                model_name=self.model_name,
-                system_instruction=system_instruction,
-                generation_config={
-                    "response_mime_type": "application/json",
-                    "response_schema": GeminiFixOutput,
-                    "temperature": 0.1,
+        models_to_try = [self.model_name]
+        if self.model_name != "gemini-3.1-flash-lite":
+            models_to_try.append("gemini-3.1-flash-lite")
 
-                },
-            )
+        last_err: Optional[Exception] = None
+        for m_name in models_to_try:
+            try:
+                model = genai.GenerativeModel(
+                    model_name=m_name,
+                    system_instruction=system_instruction,
+                    generation_config={
+                        "response_mime_type": "application/json",
+                        "response_schema": GeminiFixOutput,
+                        "temperature": 0.1,
+                    },
+                )
 
-            response = await asyncio.wait_for(
-                model.generate_content_async(user_prompt),
-                timeout=float(settings.GEMINI_TIMEOUT_SECONDS),
-            )
+                response = await asyncio.wait_for(
+                    model.generate_content_async(user_prompt),
+                    timeout=float(settings.GEMINI_TIMEOUT_SECONDS),
+                )
 
-            data = json.loads(response.text)
-            parsed = FixOutput.model_validate(data)
+                data = json.loads(response.text)
+                parsed = FixOutput.model_validate(data)
 
-            fixed_code = parsed.fixed_code
-            if not fixed_code or not fixed_code.strip() or fixed_code.strip() == code.strip():
-                reason = parsed.fix_summary or "The Fix Agent was unable to produce a safe automated repair for this snippet."
-                warnings.append(f"Automated Fix Unavailable: {reason}")
-                return None, False, warnings
+                fixed_code = parsed.fixed_code
+                if not fixed_code or not fixed_code.strip() or fixed_code.strip() == code.strip():
+                    reason = parsed.fix_summary or "The Fix Agent was unable to produce a safe automated repair for this snippet."
+                    warnings.append(f"Automated Fix Unavailable: {reason}")
+                    return None, False, warnings
 
-            return fixed_code, True, warnings
+                return fixed_code, True, warnings
 
-        except Exception as err:
-            logger.warning(f"Fix Agent failed: {err}")
-            err_msg = str(err).splitlines()[0] if str(err) else "Gemini error"
-            warnings.append(f"Automated Fix Unavailable: AI service error ({err_msg}). Manual remediation is recommended.")
-            return None, False, warnings
+            except Exception as err:
+                last_err = err
+                err_clean = _clean_gemini_error(err)
+                logger.warning(f"Fix Agent attempt on {m_name} failed: {err_clean}")
+                if "rate limit" not in err_clean and "quota" not in err_clean:
+                    break
+
+        clean_msg = _clean_gemini_error(last_err) if last_err else "AI service temporarily unavailable"
+        warnings.append(f"Automated Fix Unavailable: {clean_msg}. Manual remediation guidance is provided below.")
+        return None, False, warnings
 
     async def refine_fix(
         self,
@@ -453,7 +626,8 @@ class FixAgent:
 
         except Exception as err:
             logger.warning(f"Fix Refinement failed: {err}")
-            warnings.append(f"Fix refinement error: {str(err).splitlines()[0] if str(err) else 'Gemini error'}")
+            clean_msg = _clean_gemini_error(err)
+            warnings.append(f"Fix refinement unavailable: {clean_msg}")
             return None, None, warnings
 
 

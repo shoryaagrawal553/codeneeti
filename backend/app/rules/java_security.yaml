@@ -2,6 +2,9 @@ rules:
   - id: semgrep.java.sqli.string-concatenation
     patterns:
       - pattern-either:
+          - pattern: $STMT.executeQuery($X + ...)
+          - pattern: $STMT.executeUpdate($X + ...)
+          - pattern: $CONN.prepareStatement($X + ...)
           - pattern: $STMT.executeQuery("..." + $VAR)
           - pattern: $STMT.executeUpdate("..." + $VAR)
           - pattern: $CONN.prepareStatement("..." + $VAR)

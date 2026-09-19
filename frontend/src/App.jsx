@@ -589,6 +589,8 @@ export default function App() {
                   verificationAvailable={reviewResult.verification_available}
                   warnings={reviewResult.warnings}
                   summary={reviewResult.summary}
+                  findings={reviewResult.findings}
+                  onSelectFinding={setSelectedFinding}
                   onApplyFix={handleApplyFix}
                 />
               )}

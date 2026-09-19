@@ -44,7 +44,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### FE-002 — Code Input Screen & Monaco Editor Integration
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `FE-001`  
 **Files/Area:** `/frontend/**`  
 **Goal:** Build the main code entry interface featuring Monaco Editor, language switching, file uploading, and input validation.  
@@ -58,7 +58,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### FE-003 — API Client & Mock Service Layer
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `FE-001`  
 **Files/Area:** `/frontend/**`  
 **Goal:** Implement the frontend API service module to communicate with backend endpoints and support offline mock development mode.  
@@ -70,7 +70,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### FE-004 — Pipeline Progress & Analysis Overlay
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `FE-002`, `FE-003`  
 **Files/Area:** `/frontend/**`  
 **Goal:** Provide visual feedback during the review process showing stage-labeled progression.  
@@ -82,7 +82,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### FE-005 — Findings List & Issue Detail Component
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `FE-001`, `FE-003`  
 **Files/Area:** `/frontend/**`  
 **Goal:** Render the structured list of code findings with severity indicators, explanations, and verification tags.  
@@ -95,7 +95,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### FE-006 — Code Diff Viewer & Remediation Panel
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `FE-001`, `FE-005`  
 **Files/Area:** `/frontend/**`  
 **Goal:** Display original vs. fixed code in a clear visual diff viewer with copy controls and remediation summaries.  
@@ -123,7 +123,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### BE-002 — Health, Languages & Validation Endpoints
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `BE-001`  
 **Files/Area:** `/backend/**`  
 **Goal:** Implement utility endpoints and request validation guards.  
@@ -136,7 +136,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### BE-003 — Deterministic Static Analysis Runner (Semgrep & Bandit)
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `BE-001`  
 **Files/Area:** `/backend/**`  
 **Goal:** Build subprocess runners for Semgrep and Bandit that inspect submitted code without executing it, returning normalized finding dictionaries.  
@@ -150,7 +150,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### BE-004 — Gemini Integration & Analyzer Agent
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `BE-001`, `BE-003`  
 **Files/Area:** `/backend/**`  
 **Goal:** Implement the Analyzer Agent using `google-generativeai` with structured JSON schema output to enrich raw static findings.  
@@ -164,7 +164,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### BE-005 — Fix Agent Implementation
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `BE-004`  
 **Files/Area:** `/backend/**`  
 **Goal:** Implement the Fix Agent to generate minimal, targeted code repairs addressing all verified findings.  
@@ -176,7 +176,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### BE-006 — Verifier Agent & Pipeline Orchestration
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `BE-003`, `BE-005`  
 **Files/Area:** `/backend/**`  
 **Goal:** Re-run static analysis on fixed code, semantically reconcile findings, and assemble the complete `POST /api/analyze` response.  
@@ -185,6 +185,20 @@ This document is the shared coordination and task ownership board for human oper
 - Accurately tags findings: `Resolved` (rule no longer fires), `Unresolved` (rule still fires), or `Regression` (new rule triggered).
 - Calls Gemini for line-shift reconciliation only when needed, never fabricating a `Resolved` status.
 - Final `POST /api/analyze` endpoint coordinates the pipeline and returns the complete `ReviewResult` within the 90s timeout window.
+
+---
+
+### BE-007 — Interactive Fix Refinement Endpoint (POST /api/refine)
+**Status:** DONE  
+**Depends on:** `BE-005`, `BE-006`  
+**Files/Area:** `/backend/**`, `API_CONTRACT.md`  
+**Goal:** Implement interactive remediation refinement allowing developers to prompt for tailored code repairs with deterministic verifier re-analysis.  
+**Acceptance criteria:**
+- `POST /api/refine` endpoint implemented matching [API_CONTRACT.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/API_CONTRACT.md) Section 8.4.
+- `RefineRequest` and `RefineResult` models with size guards (100 KB code, 2 KB instructions) and null-byte defenses.
+- `FixAgent.refine_fix` executes structured Gemini call isolating instructions in safe delimiters.
+- Verifier Agent empirically re-scans the refined code to confirm issue resolution or flag regressions.
+- Automated tests in `test_agents.py` and `test_endpoints.py` passing (53 total passing tests).
 
 ---
 
@@ -207,7 +221,7 @@ This document is the shared coordination and task ownership board for human oper
 ## Testing Workstream
 
 ### TEST-001 — Backend API & Static Analysis Test Suite
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `BE-002`, `BE-003`  
 **Files/Area:** `/backend/tests/**`  
 **Goal:** Create automated test suite for endpoints, static analysis parsing, and error conditions.  

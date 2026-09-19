@@ -1,0 +1,37 @@
+rules:
+  - id: semgrep.typescript.security.insecure-eval
+    pattern: eval(...)
+    message: "Insecure use of eval() detected in TypeScript. Can enable arbitrary code execution."
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.typescript.security.innerhtml-xss
+    pattern: $EL.innerHTML = $INPUT
+    message: "Direct innerHTML assignment detected in TypeScript. Can lead to Cross-Site Scripting (XSS)."
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-79: Improper Neutralization of Input During Web Page Generation"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.typescript.secrets.hardcoded-token
+    patterns:
+      - pattern-either:
+          - pattern: const $VAR = "..."
+          - pattern: 'const $VAR: string = "..."'
+
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(api_key|token|secret|password).*
+    message: "Hardcoded secret or credential token in TypeScript source."
+    languages: [typescript]
+    severity: WARNING
+    metadata:
+      cwe: ["CWE-798: Use of Hard-coded Credentials"]
+      category: security
+      confidence: HIGH

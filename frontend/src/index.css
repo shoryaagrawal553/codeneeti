@@ -290,3 +290,9 @@ code, pre {
 .animate-pulse-glow {
   animation: pulseGlow 2s ease-in-out infinite;
 }
+
+/* --- Editor & Monaco Highlights --- */
+.finding-line-highlight {
+  background-color: rgba(239, 68, 68, 0.18) !important;
+  border-left: 3px solid var(--severity-critical);
+}

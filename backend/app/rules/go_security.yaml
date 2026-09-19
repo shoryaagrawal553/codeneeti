@@ -1,0 +1,42 @@
+rules:
+  - id: semgrep.go.sqli.formatted-query
+    patterns:
+      - pattern-either:
+          - pattern: $DB.Query(fmt.Sprintf("...", ...))
+          - pattern: $DB.QueryRow(fmt.Sprintf("...", ...))
+          - pattern: $DB.Exec(fmt.Sprintf("...", ...))
+          - pattern: $DB.Query("..." + $VAR)
+    message: "Potential SQL Injection detected via unescaped string formatting in Go database query."
+    languages: [go]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-89: Improper Neutralization of Special Elements used in an SQL Command"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.go.security.command-injection
+    pattern: exec.Command($PROG, $ARG)
+    message: "Potential command injection in Go via exec.Command. Ensure parameters are strictly sanitized."
+    languages: [go]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-78: Improper Neutralization of Special Elements used in an OS Command"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.go.secrets.hardcoded-password
+    patterns:
+      - pattern-either:
+          - pattern: const $VAR = "..."
+          - pattern: var $VAR = "..."
+          - pattern: $VAR := "..."
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(password|secret|api_key|token).*
+    message: "Hardcoded credential or secret detected in Go source code."
+    languages: [go]
+    severity: WARNING
+    metadata:
+      cwe: ["CWE-798: Use of Hard-coded Credentials"]
+      category: security
+      confidence: HIGH

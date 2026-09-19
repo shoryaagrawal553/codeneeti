@@ -1,0 +1,38 @@
+rules:
+  - id: semgrep.java.sqli.string-concatenation
+    patterns:
+      - pattern-either:
+          - pattern: $STMT.executeQuery("..." + $VAR)
+          - pattern: $STMT.executeUpdate("..." + $VAR)
+          - pattern: $CONN.prepareStatement("..." + $VAR)
+    message: "Potential SQL Injection detected via unescaped string concatenation in SQL query."
+    languages: [java]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-89: Improper Neutralization of Special Elements used in an SQL Command"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.java.security.command-injection
+    pattern: Runtime.getRuntime().exec(...)
+    message: "Potential command injection via Runtime.getRuntime().exec(). Use ProcessBuilder with parameterized arguments."
+    languages: [java]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-78: Improper Neutralization of Special Elements used in an OS Command"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.java.secrets.hardcoded-password
+    patterns:
+      - pattern: String $VAR = "...";
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(password|secret|api_key|token).*
+    message: "Hardcoded credential or secret detected in Java source code."
+    languages: [java]
+    severity: WARNING
+    metadata:
+      cwe: ["CWE-798: Use of Hard-coded Credentials"]
+      category: security
+      confidence: HIGH

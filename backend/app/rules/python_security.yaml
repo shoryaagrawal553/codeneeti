@@ -1,0 +1,39 @@
+rules:
+  - id: semgrep.python.sqli.formatted-query
+    patterns:
+      - pattern-either:
+          - pattern: $CURSOR.execute(f"...{$VAR}...")
+          - pattern: $CURSOR.execute("..." % ($VAR, ...))
+          - pattern: $CURSOR.execute("..." + $VAR)
+    message: "Potential SQL Injection detected via unescaped string formatting in query execution."
+    languages: [python]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-89: Improper Neutralization of Special Elements used in an SQL Command"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.python.secrets.hardcoded-password
+    patterns:
+      - pattern-either:
+          - pattern: $VAR = "..."
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(password|secret|token|api_key).*
+    message: "Hardcoded credential or secret detected in source code."
+    languages: [python]
+    severity: WARNING
+    metadata:
+      cwe: ["CWE-798: Use of Hard-coded Credentials"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.python.security.insecure-eval
+    pattern: eval(...)
+    message: "Insecure use of eval() detected. Can allow arbitrary code execution."
+    languages: [python]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"]
+      category: security
+      confidence: HIGH

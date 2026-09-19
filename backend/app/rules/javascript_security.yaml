@@ -1,0 +1,34 @@
+rules:
+  - id: semgrep.javascript.security.insecure-eval
+    pattern: eval(...)
+    message: "Insecure use of eval() detected in JavaScript. Can enable remote code execution."
+    languages: [javascript]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.javascript.security.innerhtml-xss
+    pattern: $EL.innerHTML = $INPUT
+    message: "Direct innerHTML assignment detected. Can lead to Cross-Site Scripting (XSS)."
+    languages: [javascript]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-79: Improper Neutralization of Input During Web Page Generation"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.javascript.secrets.hardcoded-token
+    patterns:
+      - pattern: const $VAR = "..."
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(api_key|token|secret|password).*
+    message: "Hardcoded secret or credential token in JavaScript source."
+    languages: [javascript]
+    severity: WARNING
+    metadata:
+      cwe: ["CWE-798: Use of Hard-coded Credentials"]
+      category: security
+      confidence: HIGH

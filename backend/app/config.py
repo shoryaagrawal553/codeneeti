@@ -18,14 +18,20 @@ class Settings:
     """Backend application settings."""
 
     # Server settings
-    HOST: str = os.getenv("HOST", "0.0.0.0")
+    HOST: str = os.getenv("HOST", "127.0.0.1")
     PORT: int = int(os.getenv("PORT", "8000"))
 
-    # Security & API Keys
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+    # Security & Size Guards
+    MAX_CODE_SIZE_BYTES: int = int(os.getenv("MAX_CODE_SIZE_BYTES", "102400"))
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
     # LLM & Pipeline Settings
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+
+    ANALYZER_TIMEOUT_SECONDS: int = int(os.getenv("ANALYZER_TIMEOUT_SECONDS", "25"))
+    GEMINI_TIMEOUT_SECONDS: int = int(os.getenv("GEMINI_TIMEOUT_SECONDS", "30"))
     AGENT_TIMEOUT_SECONDS: int = int(os.getenv("AGENT_TIMEOUT_SECONDS", "30"))
     PIPELINE_TIMEOUT_SECONDS: int = int(os.getenv("PIPELINE_TIMEOUT_SECONDS", "90"))
 

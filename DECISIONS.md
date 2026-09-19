@@ -297,12 +297,40 @@ Use `requirements.txt` as the sole Python dependency manifest for the backend. D
 - BE-001 must create `requirements.txt` (not `pyproject.toml`) as the backend dependency file.
 - Backend environment setup is: `python -m venv .venv && pip install -r requirements.txt`.
 
+### DEC-014 — Centralized Multi-Language Registry & Semgrep Adaptation
+
+**Status:** Accepted  
+**Date:** 2026-09-19
+
+**Decision:**
+Centralize all language configurations into a single `LANGUAGE_REGISTRY` mapping identifiers, file extensions, supported analyzers, and syntax detection keywords for 7 languages (Python, JavaScript, TypeScript, Java, C, C++, Go) plus `auto`.
+
+**Reason:**
+Eliminates scattered conditionals across the codebase, makes adding future languages modular, and standardizes multi-language static analysis rulesets using Semgrep and Bandit.
+
 **Scope:**
-`/backend/requirements.txt`
+`/backend/app/languages.py`, `/backend/app/rules/**`
+
+---
+
+### DEC-015 — Tool Capability Detection & Cryptographic Finding Deduplication
+
+**Status:** Accepted  
+**Date:** 2026-09-19
+
+**Decision:**
+Implement runtime capability probing for external CLI tools with graceful degradation, stable SHA-256 finding fingerprints, and cross-tool deduplication.
+
+**Reason:**
+Ensures the backend remains resilient in environments where optional tools (e.g. `eslint`, `clang-tidy`) are not installed, prevents duplicate findings on overlapping lines, and enables reliable evidence-based fix verification across line shifts.
+
+**Scope:**
+`/backend/app/analyzers.py`, `/backend/app/pipeline.py`
 
 ---
 
 ## Unresolved Decisions (From PRD Section 22)
+
 
 The following minor items remain open for human developer resolution and are NOT accepted decisions:
 

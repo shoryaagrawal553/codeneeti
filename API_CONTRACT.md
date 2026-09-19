@@ -324,6 +324,32 @@ Frontend developers can use this static mock fixture to build and test the compl
 
 ---
 
+### 8.4 Interactive Fix Refinement — `POST /api/refine`
+
+Allows developers to provide custom instructions (e.g. choice of libraries, architectural patterns, constraint adjustments) to refine a previously generated fix. The backend re-runs the Fix Agent with the prompt constraints and then empirically re-verifies the refined code against the static analysis engine.
+
+#### Request Schema (`RefineRequest`)
+
+| Field | Type | Required | Constraints | Description |
+|---|---|---|---|---|
+| `original_code` | string | Yes | 1 to 102,400 bytes | Original submitted code containing issues |
+| `current_fixed_code` | string | No | max 102,400 bytes | Previously generated fix or null |
+| `language` | string | Yes | supported language | Target language identifier |
+| `findings` | array | Yes | array of `Finding` | Detected findings to address |
+| `instruction` | string | Yes | 1 to 2,048 chars | Developer refinement instruction |
+
+#### Response Schema (`RefineResult`)
+
+| Field | Type | Description |
+|---|---|---|
+| `refined_code` | string | Refined remediated code |
+| `refine_summary` | string | Plain-language explanation of adjustments made |
+| `verification_status` | string | `Resolved`, `Unresolved`, `Regression`, or `Unavailable` |
+| `scanner_findings_count` | integer | Number of static analysis findings detected in refined code |
+| `warnings` | array of strings | Any warnings or degraded state notices |
+
+---
+
 ## 9. Contract Change Process
 
 When a frontend or backend developer/agent requires an API modification:

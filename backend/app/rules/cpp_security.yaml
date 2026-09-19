@@ -1,0 +1,46 @@
+rules:
+  - id: semgrep.cpp.security.insecure-gets
+    pattern: gets(...)
+    message: "Insecure function gets() detected in C++. It provides no boundary checking and leads to buffer overflows (CWE-120)."
+    languages: [cpp]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-120: Buffer Copy without Checking Size of Input"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.cpp.security.insecure-strcpy
+    pattern: strcpy($DEST, $SRC)
+    message: "Insecure strcpy() detected in C++. Prefer std::string or safe bounded string operations."
+    languages: [cpp]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-120: Buffer Copy without Checking Size of Input"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.cpp.security.insecure-system
+    pattern: std::system(...)
+    message: "Insecure use of std::system() detected in C++. Can lead to command injection."
+    languages: [cpp]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-78: Improper Neutralization of Special Elements used in an OS Command"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.cpp.secrets.hardcoded-password
+    patterns:
+      - pattern-either:
+          - pattern: const std::string $VAR = "...";
+          - pattern: std::string $VAR = "...";
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(password|secret|api_key|token).*
+    message: "Hardcoded credential or secret detected in C++ source code."
+    languages: [cpp]
+    severity: WARNING
+    metadata:
+      cwe: ["CWE-798: Use of Hard-coded Credentials"]
+      category: security
+      confidence: HIGH

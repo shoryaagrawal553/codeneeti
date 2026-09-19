@@ -1,0 +1,44 @@
+rules:
+  - id: semgrep.c.security.insecure-gets
+    pattern: gets(...)
+    message: "Insecure function gets() detected. It provides no boundary checking and leads to buffer overflows (CWE-120)."
+    languages: [c]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-120: Buffer Copy without Checking Size of Input"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.c.security.insecure-strcpy
+    pattern: strcpy($DEST, $SRC)
+    message: "Insecure string copy function strcpy() detected. Use strncpy() or safe string utilities to prevent buffer overflows."
+    languages: [c]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-120: Buffer Copy without Checking Size of Input"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.c.security.insecure-system
+    pattern: system(...)
+    message: "Insecure use of system() detected. Can allow arbitrary command injection."
+    languages: [c]
+    severity: ERROR
+    metadata:
+      cwe: ["CWE-78: Improper Neutralization of Special Elements used in an OS Command"]
+      category: security
+      confidence: HIGH
+
+  - id: semgrep.c.secrets.hardcoded-password
+    patterns:
+      - pattern: const char *$VAR = "...";
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(password|secret|api_key|token).*
+    message: "Hardcoded credential or secret detected in C source code."
+    languages: [c]
+    severity: WARNING
+    metadata:
+      cwe: ["CWE-798: Use of Hard-coded Credentials"]
+      category: security
+      confidence: HIGH

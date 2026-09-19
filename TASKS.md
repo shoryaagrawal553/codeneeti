@@ -44,7 +44,7 @@ This document is the shared coordination and task ownership board for human oper
 ---
 
 ### FE-002 — Code Input Screen & Monaco Editor Integration
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `FE-001`  
 **Files/Area:** `/frontend/**`  
 **Goal:** Build the main code entry interface featuring Monaco Editor, language switching, file uploading, and input validation.  

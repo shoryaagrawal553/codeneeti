@@ -1,0 +1,396 @@
+/* ==========================================================================
+   Pixel-Art Meadow & CRT Landing Scene Styles
+   Source of Truth: crt_meadow.png Reference Artwork
+   ========================================================================== */
+
+.pixel-art {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Fullscreen immersive viewport */
+.landing-viewport {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #1b7cd5 0%, #2287e8 45%, #3d9d30 85%, #2a8120 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+/* 16:9 cinematic aspect-ratio scene canvas */
+.scene-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: calc(100vh * (1024 / 571));
+  max-height: calc(100vw * (571 / 1024));
+  aspect-ratio: 1024 / 571;
+  background-image: url('/assets/crt_meadow.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Environmental Movement: Clouds --- */
+.cloud-drift-layer {
+  position: absolute;
+  top: 4%;
+  left: 0;
+  width: 200%;
+  height: 38%;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image: radial-gradient(ellipse 140px 50px at 15% 40%, #ffffff 0%, transparent 70%),
+                    radial-gradient(ellipse 200px 70px at 45% 30%, #ffffff 0%, transparent 70%),
+                    radial-gradient(ellipse 160px 55px at 75% 50%, #ffffff 0%, transparent 70%);
+  animation: driftClouds 70s linear infinite;
+}
+
+@keyframes driftClouds {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* --- Environmental Movement: Flying Birds --- */
+.bird {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.bird-1 {
+  top: 13%;
+  left: -5%;
+  animation: flyAcross 26s linear infinite;
+}
+
+.bird-2 {
+  top: 21%;
+  left: -10%;
+  animation: flyAcross 34s linear infinite 12s;
+  transform: scale(0.75);
+  opacity: 0.85;
+}
+
+.bird-3 {
+  top: 9%;
+  left: -8%;
+  animation: flyAcross 23s linear infinite 6s;
+  transform: scale(0.6);
+  opacity: 0.7;
+}
+
+@keyframes flyAcross {
+  0% {
+    transform: translate(-10vw, 0);
+  }
+  50% {
+    transform: translate(55vw, -14px);
+  }
+  100% {
+    transform: translate(115vw, -28px);
+  }
+}
+
+/* --- Environmental Movement: Floating Motes / Pollen --- */
+.pollen-mote {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background-color: rgba(255, 255, 230, 0.75);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 12;
+  animation: floatMote 9s ease-in-out infinite;
+}
+
+@keyframes floatMote {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.85;
+  }
+  75% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-85px) translateX(35px);
+    opacity: 0;
+  }
+}
+
+/* --- Environmental Movement: Subtle Swaying Meadow Flowers --- */
+.swaying-flower {
+  position: absolute;
+  pointer-events: none;
+  z-index: 14;
+  transform-origin: bottom center;
+  animation: gentleSway 5s ease-in-out infinite alternate;
+}
+
+@keyframes gentleSway {
+  0% { transform: rotate(-1.5deg); }
+  100% { transform: rotate(1.5deg); }
+}
+
+/* --- CRT Screen Gateway --- */
+/* Calibrated to the exact dark glass CRT screen in crt_meadow.png */
+.crt-interactive-zone {
+  position: absolute;
+  left: 41.0%;
+  top: 49.6%;
+  width: 13.8%;
+  height: 22.5%;
+  cursor: pointer;
+  z-index: 25;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.95);
+  transition: box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease;
+  outline: none;
+}
+
+.crt-interactive-zone:hover,
+.crt-interactive-zone:focus-visible {
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.9), 
+              0 0 20px rgba(74, 222, 128, 0.5),
+              0 0 35px rgba(99, 102, 241, 0.3);
+  transform: scale(1.02);
+}
+
+/* Dark Glass CRT Monitor Screen */
+.crt-screen {
+  position: absolute;
+  inset: 0;
+  background-color: #121c1e;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+/* Curved glass vignette */
+.crt-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.8) 100%);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* CRT Scanline Raster */
+.crt-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.36),
+    rgba(0, 0, 0, 0.36) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.88;
+}
+
+/* CRT Phosphor Glow / Flicker */
+.crt-phosphor-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 48% 46%, rgba(52, 211, 153, 0.15) 0%, transparent 80%);
+  pointer-events: none;
+  z-index: 3;
+  animation: crtFlicker 0.18s infinite;
+}
+
+.crt-interactive-zone:hover .crt-phosphor-glow {
+  background: radial-gradient(circle at 48% 46%, rgba(52, 211, 153, 0.28) 0%, transparent 80%);
+}
+
+@keyframes crtFlicker {
+  0% { opacity: 0.94; }
+  50% { opacity: 1; }
+  100% { opacity: 0.96; }
+}
+
+/* Text Content Inside CRT Screen */
+.crt-content {
+  position: relative;
+  z-index: 6;
+  text-align: center;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  color: #4ade80;
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.crt-logo {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.92;
+}
+
+.crt-status {
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  opacity: 0.82;
+}
+
+.crt-prompt {
+  margin-top: 3px;
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #86efac;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(16, 185, 129, 0.16);
+  padding: 2px 5px;
+  border-radius: 2px;
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.crt-interactive-zone:hover .crt-prompt {
+  background: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
+}
+
+.crt-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 7px;
+  background-color: #4ade80;
+  animation: blinkCursor 0.9s steps(2, start) infinite;
+}
+
+@keyframes blinkCursor {
+  to { visibility: hidden; }
+}
+
+/* Hover prompt tooltip */
+.crt-hover-tooltip {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  z-index: 30;
+}
+
+.crt-interactive-zone:hover .crt-hover-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(2px);
+}
+
+/* --- Minimalistic Overlay UI --- */
+.minimal-overlay-header {
+  position: absolute;
+  top: 1.5rem;
+  left: 2rem;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.minimal-brand-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.35rem 0.85rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.brand-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #4ade80;
+  box-shadow: 0 0 6px #4ade80;
+}
+
+.minimal-overlay-footer {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.entry-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.35rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  animation: pulseHint 3s ease-in-out infinite;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes pulseHint {
+  0%, 100% { opacity: 0.75; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .cloud-drift-layer,
+  .bird,
+  .pollen-mote,
+  .swaying-flower,
+  .crt-phosphor-glow,
+  .entry-hint {
+    animation: none !important;
+  }
+}

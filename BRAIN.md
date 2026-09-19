@@ -16,9 +16,12 @@ The project is in the scaffolding and pre-implementation phase. All foundational
 - `.agents/skills/`: 5 operational workflow skills created (`frontend-dev`, `backend-dev`, `agent-pipeline-dev`, `test-and-debug`, `ui-research-integration`).
 
 ## Frontend State
-- **Implemented:** `FE-001` (React + Vite project scaffolding initialized in `/frontend`, modern design system in `/frontend/src/index.css`, offline mock fixture at `/frontend/src/mocks/sampleReviewResult.json`, verified clean build and dev server rendering).
+- **Implemented:**
+  - `FE-001`: React + Vite project scaffolding initialized in `/frontend`, modern design system in `/frontend/src/index.css`, offline mock fixture at `/frontend/src/mocks/sampleReviewResult.json`.
+  - `FE-002`: Apple Design-inspired unified code entry experience: Monaco Editor (`@monaco-editor/react`) integration, drag-and-drop file upload overlay, file picker, language switching (Auto-detect, Python, JavaScript), client-side 100 KB size guard, real-time line/character counters, sample code loader, and mock 3-agent pipeline execution.
+  - **Pixel-Art Landing Scene Foundation:** Full-screen pixel-art meadow landscape matching reference image 1, animated flying birds, drifting clouds, gentle wildflower sway, ambient pollen motes, and interactive vine-covered CRT computer with scanlines, phosphor glow, green prompt (`> CODEGUARD / SYS: READY / ENTER _`), and gateway transition to the review workspace.
 - **In progress:** None.
-- **Pending:** Tasks `FE-002` through `FE-006` in [TASKS.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/TASKS.md) (Monaco Editor integration, mock API client, progress overlay, findings list, diff viewer).
+- **Pending:** Tasks `FE-003` through `FE-006` in [TASKS.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/TASKS.md).
 - **Known issues:** None.
 
 ## Backend State

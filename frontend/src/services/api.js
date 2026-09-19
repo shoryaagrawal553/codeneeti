@@ -151,10 +151,17 @@ export async function analyzeCode({ code, language = 'auto', filename = null }) 
       throw err;
     }
 
-    // If backend is not running or network failed, fallback gracefully to mock fixture
-    console.warn('[CodeGuard API] Backend unreachable, serving mock fixture:', err.message);
-    await simulateNetworkDelay(900);
-    return sampleReviewResult;
+    if (USE_MOCKS) {
+      console.warn('[CodeGuard API] Serving mock fixture:', err.message);
+      await simulateNetworkDelay(900);
+      return sampleReviewResult;
+    }
+
+    throw new ApiError(
+      'NETWORK_ERROR',
+      'Unable to connect to CodeGuard backend. Please ensure the backend server is running on http://127.0.0.1:8000.',
+      503
+    );
   }
 }
 

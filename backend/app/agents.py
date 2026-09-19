@@ -44,9 +44,9 @@ if settings.GEMINI_API_KEY:
 class EnrichedItem(BaseModel):
     """Enrichment output structure for a single finding with resilient value normalization."""
 
-    id: str
-    title: str
-    explanation: str
+    id: str = ""
+    title: str = "Issue detected"
+    explanation: str = "Deterministic static analysis identified an issue at this location."
     severity: SeverityLevel = "Medium"
     category: CategoryLevel = "Security"
     cwe: Optional[str] = None
@@ -129,9 +129,26 @@ class GeminiFixOutput(BaseModel):
 class FixOutput(BaseModel):
     """Structured response from Gemini Fix Agent."""
 
-    fixed_code: str
+    fixed_code: str = ""
     fix_summary: str = ""
 
+
+def _parse_json_safely(text: str) -> dict:
+    """Safely parse JSON output, stripping markdown code blocks if present."""
+    if not text:
+        return {}
+    clean = text.strip()
+    if clean.startswith("```"):
+        clean = re.sub(r"^```(?:json)?\s*", "", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"\s*```$", "", clean)
+    try:
+        return json.loads(clean.strip())
+    except Exception:
+        # Match outermost json object or array
+        match = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", clean)
+        if match:
+            return json.loads(match.group(1))
+        raise
 
 
 def _clean_gemini_error(err: Exception) -> str:
@@ -139,9 +156,12 @@ def _clean_gemini_error(err: Exception) -> str:
     err_str = str(err)
     if "429" in err_str or "ResourceExhausted" in err_str or "quota" in err_str.lower():
         return "AI service rate limit / quota exceeded"
+    if "timeout" in err_str.lower() or "deadline" in err_str.lower():
+        return "AI service request timed out"
     clean = re.sub(r"https?://\S+", "", err_str)
     first_line = clean.splitlines()[0].strip() if clean else ""
     first_line = re.sub(r"^<\w+\s+of\s+RPC\s+that\s+terminated\s+with:\s*", "", first_line)
+    first_line = re.sub(r"^\d+\s+", "", first_line)
     return first_line[:120] if first_line else "AI service temporarily unavailable"
 
 
@@ -317,9 +337,10 @@ class AnalyzerAgent:
             f"Static findings to enrich:\n{json.dumps(findings_summary, indent=2)}"
         )
 
-        models_to_try = [self.model_name]
-        if self.model_name != "gemini-3.1-flash-lite":
-            models_to_try.append("gemini-3.1-flash-lite")
+        models_to_try = []
+        for candidate in [self.model_name, "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]:
+            if candidate and candidate not in models_to_try:
+                models_to_try.append(candidate)
 
         last_err: Optional[Exception] = None
         for m_name in models_to_try:
@@ -335,11 +356,32 @@ class AnalyzerAgent:
                 )
 
                 response = await asyncio.wait_for(
-                    model.generate_content_async(user_prompt),
+                    asyncio.to_thread(model.generate_content, user_prompt),
                     timeout=float(settings.GEMINI_TIMEOUT_SECONDS),
                 )
 
-                data = json.loads(response.text)
+                data = _parse_json_safely(response.text)
+                if isinstance(data, list):
+                    data = {"findings": data}
+                elif isinstance(data, dict) and "findings" not in data:
+                    for k, v in data.items():
+                        if isinstance(v, list):
+                            data = {"findings": v}
+                            break
+
+                if isinstance(data, dict) and isinstance(data.get("findings"), list):
+                    normalized_findings = []
+                    for raw_idx, item in enumerate(data["findings"], start=1):
+                        if isinstance(item, dict):
+                            if not item.get("id"):
+                                item["id"] = f"find-{raw_idx}"
+                            if not item.get("title"):
+                                item["title"] = "Issue detected"
+                            if not item.get("explanation"):
+                                item["explanation"] = "Flagged by static analysis."
+                            normalized_findings.append(item)
+                    data["findings"] = normalized_findings
+
                 parsed = AnalyzerOutput.model_validate(data)
 
                 enriched_map = {}
@@ -497,9 +539,10 @@ class FixAgent:
         )
 
 
-        models_to_try = [self.model_name]
-        if self.model_name != "gemini-3.1-flash-lite":
-            models_to_try.append("gemini-3.1-flash-lite")
+        models_to_try = []
+        for candidate in [self.model_name, "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]:
+            if candidate and candidate not in models_to_try:
+                models_to_try.append(candidate)
 
         last_err: Optional[Exception] = None
         for m_name in models_to_try:
@@ -515,11 +558,11 @@ class FixAgent:
                 )
 
                 response = await asyncio.wait_for(
-                    model.generate_content_async(user_prompt),
+                    asyncio.to_thread(model.generate_content, user_prompt),
                     timeout=float(settings.GEMINI_TIMEOUT_SECONDS),
                 )
 
-                data = json.loads(response.text)
+                data = _parse_json_safely(response.text)
                 parsed = FixOutput.model_validate(data)
 
                 fixed_code = parsed.fixed_code
@@ -611,11 +654,11 @@ class FixAgent:
             )
 
             response = await asyncio.wait_for(
-                model.generate_content_async(user_prompt),
+                asyncio.to_thread(model.generate_content, user_prompt),
                 timeout=float(settings.GEMINI_TIMEOUT_SECONDS),
             )
 
-            data = json.loads(response.text)
+            data = _parse_json_safely(response.text)
             parsed = FixOutput.model_validate(data)
 
             refined_code = parsed.fixed_code

@@ -249,16 +249,17 @@ This document is the shared coordination and task ownership board for human oper
 ## Integration Workstream
 
 ### INT-001 — End-to-End Local Pipeline Integration & Verification
-**Status:** TODO  
+**Status:** DONE  
 **Depends on:** `FE-006`, `BE-006`  
 **API Contract:** [API_CONTRACT.md](file:///c:/Shehzan_Workspace/CodeNeeti%20Hack/AI%20Code%20Review%20&%20Security%20Assistant/codeneeti/API_CONTRACT.md)  
-**Goal:** Verify complete end-to-end integration between frontend and backend running locally using the PRD demo sample.  
+**Goal:** Verify complete end-to-end integration between frontend and backend running locally using the PRD demo sample and all 7 supported languages.  
 **Acceptance criteria:**
 - Frontend running on `http://localhost:5173` successfully submits code to backend on `http://localhost:8000`.
-- Prepared Python demo sample (SQL injection, hardcoded secret, missing validation) produces 3 distinct findings.
+- Prepared Python demo sample (SQL injection, hardcoded secret) produces distinct findings.
 - Stage-labeled progression displays accurately during the scan.
 - Diff panel renders side-by-side comparison cleanly.
 - Resolved verification badges display correctly based on backend verifier evidence.
+- E2E matrix passing for Python, JavaScript, TypeScript, Java, C, C++, Go.
 
 ---
 

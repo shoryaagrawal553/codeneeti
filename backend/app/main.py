@@ -219,8 +219,8 @@ async def refine_code(request: RefineRequest) -> RefineResult:
 
     effective_lang = request.language
     if effective_lang == "auto":
-        from .languages import detect_language_from_filename_or_content
-        effective_lang = detect_language_from_filename_or_content(None, request.original_code)
+        from .languages import detect_language
+        effective_lang = detect_language(request.original_code)
 
     refined_code, refine_summary, warnings = await fix_agent.refine_fix(
         original_code=request.original_code,

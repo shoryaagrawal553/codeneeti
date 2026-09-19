@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Shield, Sparkles, AlertCircle, Layers, CheckCircle2 } from 'lucide-react';
+import { Layers, Sparkles, CheckCircle2 } from 'lucide-react';
+import Header from './components/Header';
 import CodeEditor from './components/CodeEditor';
 import EditorToolbar from './components/EditorToolbar';
 import FileUploader from './components/FileUploader';
@@ -7,6 +8,8 @@ import PipelineProgress from './components/PipelineProgress';
 import FindingsList from './components/FindingsList';
 import FindingDetail from './components/FindingDetail';
 import DiffViewer from './components/DiffViewer';
+import LandingScene from './components/LandingScene';
+import NotificationBanner from './components/NotificationBanner';
 import { analyzeCode, getHealth } from './services/api';
 import { MAX_CODE_BYTES } from './types';
 
@@ -24,8 +27,12 @@ def get_user(username):
 `;
 
 export default function App() {
+  // Top-level view mode: 'landing' (pixel-art meadow) | 'workspace' (code review app)
+  const [viewMode, setViewMode] = useState('landing');
+
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('auto');
+  const [isAutoDetect, setIsAutoDetect] = useState(true);
   const [filename, setFilename] = useState(null);
   const [selectedFinding, setSelectedFinding] = useState(null);
   const [activeTab, setActiveTab] = useState('findings'); // 'findings' | 'diff'
@@ -50,7 +57,7 @@ export default function App() {
     const lines = code ? code.split('\n').length : 0;
     const chars = code.length;
     const bytes = new TextEncoder().encode(code).length;
-    return { lines, chars, bytes };
+    return { lines, chars, characters: chars, bytes };
   }, [code]);
 
   const isOverLimit = codeStats.bytes > MAX_CODE_BYTES;
@@ -73,20 +80,59 @@ export default function App() {
     return null;
   }, [code, filename]);
 
-  // Handle file load from FileUploader
+  // Handle file load from FileUploader or direct drop
   const handleFileLoaded = ({ code: fileCode, filename: name, language: lang }) => {
     setCode(fileCode);
     setFilename(name);
-    setLanguage(lang);
+    if (lang) {
+      setLanguage(lang);
+      setIsAutoDetect(false);
+    }
     setErrorMessage(null);
+  };
+
+  // Direct file upload handler (for drag & drop onto Monaco or toolbar upload)
+  const handleFileUpload = (file) => {
+    if (!file) return;
+    const name = file.name;
+    const lowerName = name.toLowerCase();
+    const isPy = lowerName.endsWith('.py');
+    const isJs = lowerName.endsWith('.js');
+
+    if (!isPy && !isJs) {
+      setErrorMessage(`Unsupported file "${name}". CodeGuard strictly supports .py and .js files.`);
+      return;
+    }
+
+    if (file.size > MAX_CODE_BYTES) {
+      const sizeKb = (file.size / 1024).toFixed(1);
+      setErrorMessage(`File is too large (${sizeKb} KB). Maximum allowed size is 100 KB.`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result || '';
+      handleFileLoaded({
+        code: content,
+        filename: name,
+        language: isPy ? 'python' : 'javascript',
+      });
+    };
+    reader.onerror = () => {
+      setErrorMessage(`Failed to read "${name}".`);
+    };
+    reader.readAsText(file, 'UTF-8');
   };
 
   // Handle loading demo benchmark
   const handleLoadSample = () => {
     setCode(DEMO_SAMPLE_PYTHON);
     setLanguage('python');
+    setIsAutoDetect(false);
     setFilename('sample_query.py');
     setErrorMessage(null);
+    setFixAppliedMessage(null);
   };
 
   // Handle Clear
@@ -105,7 +151,6 @@ export default function App() {
     if (!fixedCode) return;
     setCode(fixedCode);
     setFixAppliedMessage('Verified fix successfully applied to editor! You can re-run analysis to confirm resolution.');
-    // Smooth scroll back to editor workspace
     window.scrollTo({ top: 100, behavior: 'smooth' });
   };
 
@@ -126,7 +171,7 @@ export default function App() {
     setStatus('analyzing');
     setAnalysisStage(0);
 
-    // Deterministic progression sequence for visual feedback (Phase 11)
+    // Deterministic progression sequence for visual feedback
     const stageTimer1 = setTimeout(() => setAnalysisStage(1), 350);
     const stageTimer2 = setTimeout(() => setAnalysisStage(2), 700);
     const stageTimer3 = setTimeout(() => setAnalysisStage(3), 1050);
@@ -146,7 +191,6 @@ export default function App() {
       setReviewResult(result);
       setStatus('results');
 
-      // Default select first finding if present
       if (result.findings && result.findings.length > 0) {
         setSelectedFinding(result.findings[0]);
       } else {
@@ -165,78 +209,19 @@ export default function App() {
     }
   };
 
+  // If in 'landing' mode, display the full-screen pixel-art meadow with CRT gateway
+  if (viewMode === 'landing') {
+    return <LandingScene onEnter={() => setViewMode('workspace')} />;
+  }
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Navigation Header */}
-      <header
-        style={{
-          borderBottom: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-surface-glass)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          padding: '0.85rem 0',
-        }}
-      >
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: 'var(--shadow-glow)',
-                color: '#ffffff',
-              }}
-            >
-              <Shield size={20} />
-            </div>
-            <div>
-              <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                CodeGuard
-                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--secondary)' }}>v1.0</span>
-              </h2>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Agentic AI Code Review &amp; Security Assistant
-              </span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span
-              className="badge"
-              style={{
-                backgroundColor: backendHealth.status === 'ok' ? 'var(--status-resolved-bg)' : 'var(--primary-surface)',
-                color: backendHealth.status === 'ok' ? 'var(--status-resolved)' : 'var(--primary)',
-                borderColor: backendHealth.status === 'ok' ? 'var(--status-resolved-border)' : 'var(--border-accent)',
-                fontSize: '0.75rem',
-              }}
-            >
-              <CheckCircle2 size={12} />
-              {backendHealth.status === 'ok' ? 'Backend Online' : 'Mock Mode Active'}
-            </span>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--text-muted)',
-                padding: '0.2rem 0.5rem',
-                backgroundColor: 'var(--bg-surface-elevated)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-subtle)',
-              }}
-            >
-              API Contract v1.0
-            </span>
-          </div>
-        </div>
-      </header>
+      <Header
+        onReset={handleClear}
+        onGoToLanding={() => setViewMode('landing')}
+        backendHealth={backendHealth}
+      />
 
       {/* Main Workspace */}
       <main style={{ flex: 1, padding: '1.75rem 0 3rem' }}>
@@ -252,30 +237,11 @@ export default function App() {
 
           {/* Validation or Error Banner */}
           {errorMessage && (
-            <div
-              className="animate-fade-in"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.85rem 1.25rem',
-                backgroundColor: 'var(--severity-critical-bg)',
-                border: '1px solid var(--severity-critical-border)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--severity-critical)',
-                fontSize: '0.875rem',
-              }}
-            >
-              <AlertCircle size={18} style={{ flexShrink: 0 }} />
-              <span style={{ flex: 1 }}>{errorMessage}</span>
-              <button
-                type="button"
-                onClick={() => setErrorMessage(null)}
-                style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}
-              >
-                &times;
-              </button>
-            </div>
+            <NotificationBanner
+              type="error"
+              message={errorMessage}
+              onDismiss={() => setErrorMessage(null)}
+            />
           )}
 
           {/* Fix Applied Success Banner */}
@@ -320,9 +286,15 @@ export default function App() {
               language={language}
               onLanguageChange={setLanguage}
               detectedLanguage={detectedLanguage}
+              isAutoDetect={isAutoDetect}
+              onToggleAutoDetect={setIsAutoDetect}
+              fileName={filename}
+              onClearFile={() => setFilename(null)}
               codeStats={codeStats}
               onClear={handleClear}
+              onClearCode={handleClear}
               onLoadSample={handleLoadSample}
+              onFileUpload={handleFileUpload}
               onAnalyze={handleAnalyze}
               isAnalyzing={status === 'analyzing'}
               isOverLimit={isOverLimit}
@@ -336,7 +308,10 @@ export default function App() {
               }}
               language={language === 'auto' ? (detectedLanguage ? detectedLanguage.toLowerCase() : 'python') : language}
               selectedFinding={selectedFinding}
-              height="400px"
+              onFileUpload={handleFileUpload}
+              onLoadSample={handleLoadSample}
+              isAnalyzing={status === 'analyzing'}
+              height="420px"
             />
           </div>
 
@@ -432,17 +407,52 @@ export default function App() {
               )}
             </div>
           )}
+
+          {/* Bottom Feature Badges */}
+          {status !== 'results' && status !== 'analyzing' && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                padding: '1rem 1.25rem',
+                backgroundColor: 'var(--bg-surface)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '0.8rem',
+                color: 'var(--text-muted)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+                <span>🛡️ <strong>Semgrep &amp; Bandit</strong> AST Ground Truth</span>
+                <span>🤖 <strong>3-Agent Gemini</strong> Pipeline</span>
+                <span>⚡ <strong>Empirical</strong> Fix Verification</span>
+              </div>
+              <div>
+                Supported: <strong style={{ color: 'var(--text-primary)' }}>Python (.py)</strong>, <strong style={{ color: 'var(--text-primary)' }}>JavaScript (.js)</strong>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
       {/* Footer */}
-      <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '1.25rem 0', backgroundColor: 'var(--bg-surface)' }}>
+      <footer
+        style={{
+          borderTop: '1px solid var(--border-subtle)',
+          padding: '1.25rem 0',
+          backgroundColor: 'var(--bg-surface)',
+          marginTop: 'auto',
+        }}
+      >
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
             CodeGuard &bull; CodeNeeti Hackathon 2026 &bull; Antigravity Multi-Agent Implementation
           </span>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-            Sequential Pipeline: Static Analysis &rarr; Analyzer &rarr; Fix &rarr; Verifier
+            Sequential Pipeline: Static Analysis &rarr; Analyzer &rarr; Fix &rarr; Verifier &bull; API Contract v1.0
           </span>
         </div>
       </footer>

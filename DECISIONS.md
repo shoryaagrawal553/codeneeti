@@ -1,4 +1,4 @@
-# DECISIONS.md — Architectural & Technical Decision Log
+    # DECISIONS.md — Architectural & Technical Decision Log
 
 This document is the authoritative record of approved architectural and technical decisions for CodeGuard. Its purpose is to record rationale, consequences, and alternatives, and to prevent Antigravity instances from repeatedly reconsidering or modifying settled decisions.
 

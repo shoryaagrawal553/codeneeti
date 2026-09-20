@@ -1,0 +1,41 @@
+services:
+  # ─── Backend: FastAPI + Uvicorn ───────────────────────────────────────────
+  - type: web
+    name: codeguard-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: AGENT_TIMEOUT_SECONDS
+        value: "45"
+      - key: PIPELINE_TIMEOUT_SECONDS
+        value: "120"
+      - key: GEMINI_TIMEOUT_SECONDS
+        value: "30"
+      - key: ANALYZER_TIMEOUT_SECONDS
+        value: "30"
+      - key: LOG_LEVEL
+        value: INFO
+      # GEMINI_API_KEY and CORS_ORIGINS must be set manually in Render dashboard
+      # (not stored here for security)
+
+  # ─── Frontend: Vite React SPA ─────────────────────────────────────────────
+  - type: web
+    name: codeguard-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_USE_MOCKS
+        value: "false"
+      # VITE_API_URL must be set manually in Render dashboard to your backend URL

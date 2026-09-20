@@ -6,7 +6,8 @@
 import sampleReviewResult from '../mocks/sampleReviewResult.json';
 import { MAX_CODE_BYTES, ERROR_CODES } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const rawApiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '');
+const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 /**
@@ -134,12 +135,18 @@ export async function analyzeCode({ code, language = 'auto', filename = null }) 
       }),
     });
 
-    const data = await response.json();
+    let data = {};
+    try {
+      data = await response.json();
+    } catch {
+      // Non-JSON response (e.g. HTML 502/504 error from proxy/host)
+    }
 
     if (!response.ok) {
+      const serverMessage = data.message || data.detail || (response.status === 404 ? 'API route not found (404). Check backend URL.' : null);
       throw new ApiError(
         data.error || 'PIPELINE_ERROR',
-        data.message || ERROR_CODES.PIPELINE_ERROR,
+        serverMessage || ERROR_CODES.PIPELINE_ERROR,
         response.status,
         data.partial_result || null
       );

@@ -258,7 +258,13 @@ def _find_semgrep_executable() -> Optional[str]:
     which_path = shutil.which("semgrep")
     if which_path:
         return which_path
-    scripts_dir = Path(sys.executable).parent / "Scripts" / "semgrep.exe"
+    py_dir = Path(sys.executable).parent
+    # Linux / macOS virtualenv
+    unix_bin = py_dir / "semgrep"
+    if unix_bin.exists():
+        return str(unix_bin)
+    # Windows virtualenv
+    scripts_dir = py_dir / "Scripts" / "semgrep.exe"
     if scripts_dir.exists():
         return str(scripts_dir)
     return None

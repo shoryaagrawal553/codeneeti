@@ -30,10 +30,10 @@ class Settings:
     # LLM & Pipeline Settings
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 
-    ANALYZER_TIMEOUT_SECONDS: int = int(os.getenv("ANALYZER_TIMEOUT_SECONDS", "25"))
-    GEMINI_TIMEOUT_SECONDS: int = int(os.getenv("GEMINI_TIMEOUT_SECONDS", "15"))
-    AGENT_TIMEOUT_SECONDS: int = int(os.getenv("AGENT_TIMEOUT_SECONDS", "30"))
-    PIPELINE_TIMEOUT_SECONDS: int = int(os.getenv("PIPELINE_TIMEOUT_SECONDS", "90"))
+    ANALYZER_TIMEOUT_SECONDS: int = int(os.getenv("ANALYZER_TIMEOUT_SECONDS", "30"))
+    GEMINI_TIMEOUT_SECONDS: int = int(os.getenv("GEMINI_TIMEOUT_SECONDS", "30"))
+    AGENT_TIMEOUT_SECONDS: int = int(os.getenv("AGENT_TIMEOUT_SECONDS", "45"))
+    PIPELINE_TIMEOUT_SECONDS: int = int(os.getenv("PIPELINE_TIMEOUT_SECONDS", "120"))
 
     # CORS Settings
     @property

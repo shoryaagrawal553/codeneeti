@@ -338,7 +338,7 @@ class AnalyzerAgent:
         )
 
         models_to_try = []
-        for candidate in [self.model_name, "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]:
+        for candidate in [self.model_name, "gemini-1.5-flash", "gemini-1.5-flash-8b"]:
             if candidate and candidate not in models_to_try:
                 models_to_try.append(candidate)
 
@@ -540,7 +540,7 @@ class FixAgent:
 
 
         models_to_try = []
-        for candidate in [self.model_name, "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]:
+        for candidate in [self.model_name, "gemini-1.5-flash", "gemini-1.5-flash-8b"]:
             if candidate and candidate not in models_to_try:
                 models_to_try.append(candidate)
 

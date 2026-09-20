@@ -142,11 +142,14 @@ export async function analyzeCode({ code, language = 'auto', filename = null }) 
       // Non-JSON response (e.g. HTML 502/504 error from proxy/host)
     }
 
+    console.debug('[CodeGuard] POST /analyze response:', response.status, data);
+
     if (!response.ok) {
-      const serverMessage = data.message || data.detail || (response.status === 404 ? 'API route not found (404). Check backend URL.' : null);
+      const serverMessage = data.message || data.detail || (response.status === 404 ? 'API route not found (404). Check backend URL.' : response.status === 503 || response.status === 502 ? 'Backend service is starting up (cold start). Please wait 60 seconds and try again.' : null);
+      console.error('[CodeGuard] Backend error:', response.status, data);
       throw new ApiError(
         data.error || 'PIPELINE_ERROR',
-        serverMessage || ERROR_CODES.PIPELINE_ERROR,
+        serverMessage || `Server returned HTTP ${response.status}. Check Render backend logs.`,
         response.status,
         data.partial_result || null
       );
@@ -158,6 +161,8 @@ export async function analyzeCode({ code, language = 'auto', filename = null }) 
       throw err;
     }
 
+    console.error('[CodeGuard] Network/fetch error:', err);
+
     if (USE_MOCKS) {
       console.warn('[CodeGuard API] Serving mock fixture:', err.message);
       await simulateNetworkDelay(900);
@@ -166,7 +171,7 @@ export async function analyzeCode({ code, language = 'auto', filename = null }) 
 
     throw new ApiError(
       'NETWORK_ERROR',
-      'Unable to connect to CodeGuard backend. Please ensure the backend server is running on http://127.0.0.1:8000.',
+      `Cannot reach backend (${err.message || 'network error'}). Check that VITE_API_URL is set correctly in Render and backend is running.`,
       503
     );
   }

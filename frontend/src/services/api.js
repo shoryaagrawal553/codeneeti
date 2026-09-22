@@ -4,7 +4,7 @@
  */
 
 import sampleReviewResult from '../mocks/sampleReviewResult.json';
-import { MAX_CODE_BYTES, ERROR_CODES } from '../types';
+import { MAX_CODE_BYTES, ERROR_CODES, SUPPORTED_LANGUAGES } from '../types';
 
 const rawApiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '');
 const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;

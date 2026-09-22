@@ -138,6 +138,23 @@ This document is the shared coordination and task ownership board for human oper
 
 ---
 
+### FE-009 — Mobile Responsiveness Across All Breakpoints
+**Status:** DONE  
+**Depends on:** `FE-008`  
+**Files/Area:** `/frontend/**`  
+**Goal:** Fix mobile responsiveness across all components so CodeGuard operates cleanly without horizontal overflow at 320px, 375px, 390px, 430px, 768px, and desktop widths while preserving the existing UI, animations, and functionality.  
+**Acceptance criteria:**
+- Zero horizontal scrolling on body/viewport across all mobile widths (320px, 375px, 390px, 430px, 768px).
+- Navbar pill adapts responsively without clipping brand or status indicator.
+- Review Workspace and Monaco Editor fit viewport width with internal horizontal code scrolling preserved.
+- Findings & Analysis section stacks cleanly into single-column layout on mobile.
+- Remediation & Diff comparison stacks into single-column layout on mobile while preserving internal code scrolling.
+- Verification section, metrics, and progress steps wrap safely.
+- Desktop UI, visual identity, and animation page remain 100% intact and visually identical.
+- Automated checks (`oxlint`, `npm run build`) pass cleanly.
+
+---
+
 ## Backend Workstream
 
 ### BE-001 — Initialize FastAPI Project & Core Configuration

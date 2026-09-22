@@ -343,3 +343,154 @@ code, pre, .mono-text {
     transform: translateY(0);
   }
 }
+
+/* ==========================================================================
+   Mobile Responsive Utilities & Media Breakpoints
+   Zero horizontal overflow guarantee across 320px, 375px, 390px, 430px, 768px
+   ========================================================================== */
+
+/* Container responsiveness */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+}
+
+/* GSAP ScrollTrigger Pinned Spacer Containment */
+.pin-spacer {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Safe text and code wrapping */
+.text-wrap-safe {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Review Workspace Findings & Details Grid */
+.workspace-findings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .workspace-findings-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+/* Diff Viewer Split Side-by-Side Grid */
+.diff-split-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  .diff-split-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* FlowForge Responsive Pill Navbar */
+.navbar-pill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid #E8E2F2;
+  border-radius: 9999px;
+  padding: 0.5rem 1.25rem;
+  box-shadow: 0 4px 24px rgba(35, 25, 60, 0.08), 0 1px 4px rgba(35, 25, 60, 0.04);
+  width: 100%;
+  max-width: 960px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.navbar-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .navbar-pill {
+    padding: 0.45rem 0.85rem;
+    gap: 0.75rem;
+  }
+
+  .navbar-nav-links {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .navbar-pill {
+    flex-wrap: wrap;
+    border-radius: 16px;
+    padding: 0.5rem 0.75rem;
+    gap: 0.4rem;
+  }
+
+  .navbar-nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    border-top: 1px solid #EDE8F8;
+    padding-top: 0.35rem;
+    margin-top: 0.15rem;
+    gap: 0.35rem;
+  }
+}
+
+/* Editor Toolbar Responsive Layout */
+.editor-toolbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 1.15rem;
+  background-color: #1E192C;
+  border-bottom: 1px solid #2F2844;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .editor-toolbar-container {
+    padding: 0.65rem 0.75rem;
+    gap: 0.5rem;
+  }
+}
+
+/* Cinematic Hero Narrative Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero-phases-labels {
+    display: none !important;
+  }
+
+  .hero-progress-bar-container {
+    left: 1rem !important;
+    right: 1rem !important;
+    bottom: 1rem !important;
+  }
+}
+

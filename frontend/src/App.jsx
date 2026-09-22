@@ -416,17 +416,31 @@ export default function App() {
                 padding: '0.55rem 1rem',
                 backgroundColor: '#161222',
                 borderBottom: '1px solid #28213B',
+                width: '100%',
+                boxSizing: 'border-box',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
                 <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#F87171' }} />
                 <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#FBBF24' }} />
                 <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#34D399' }} />
               </div>
-              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: '#7E7399', fontWeight: 500 }}>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontFamily: 'var(--font-mono)',
+                  color: '#7E7399',
+                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: 'calc(100% - 70px)',
+                  textAlign: 'center',
+                }}
+              >
                 codeguard-workstation &bull; {filename || 'untitled'}
               </span>
-              <div style={{ width: '38px' }} /> {/* Spacer */}
+              <div style={{ width: '38px', flexShrink: 0 }} /> {/* Spacer */}
             </div>
 
             {/* Editor Toolbar */}
@@ -486,7 +500,7 @@ export default function App() {
                   gap: '0.75rem',
                 }}
               >
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     onClick={() => setActiveTab('findings')}
@@ -498,6 +512,7 @@ export default function App() {
                       fontSize: '0.85rem',
                       fontWeight: 700,
                       padding: '0.5rem 1.15rem',
+                      minHeight: '38px',
                       boxShadow: activeTab === 'findings' ? '0 2px 8px rgba(94, 79, 152, 0.2)' : '0 1px 3px rgba(35, 25, 60, 0.04)',
                     }}
                   >
@@ -516,6 +531,7 @@ export default function App() {
                       fontSize: '0.85rem',
                       fontWeight: 700,
                       padding: '0.5rem 1.15rem',
+                      minHeight: '38px',
                       boxShadow: activeTab === 'diff' ? '0 2px 8px rgba(44, 140, 125, 0.2)' : '0 1px 3px rgba(35, 25, 60, 0.04)',
                     }}
                   >
@@ -551,14 +567,7 @@ export default function App() {
 
               {/* Tab Content */}
               {activeTab === 'findings' ? (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-                    gap: '1.5rem',
-                    alignItems: 'start',
-                  }}
-                >
+                <div className="workspace-findings-grid">
                   {/* Left Column: Structured Findings List */}
                   <div>
                     <h4 style={{ margin: '0 0 0.85rem', fontSize: '0.95rem', fontWeight: 700, color: '#1A1626' }}>
@@ -612,6 +621,8 @@ export default function App() {
               fontSize: '0.825rem',
               color: '#58516B',
               boxShadow: '0 2px 8px rgba(35, 25, 60, 0.03)',
+              width: '100%',
+              boxSizing: 'border-box',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
@@ -641,13 +652,15 @@ export default function App() {
           backgroundColor: '#FFFFFF',
           position: 'relative',
           zIndex: 10,
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <span style={{ fontSize: '0.8rem', color: '#88809E' }}>
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', width: '100%', boxSizing: 'border-box' }}>
+          <span style={{ fontSize: '0.8rem', color: '#88809E', overflowWrap: 'anywhere' }}>
             CodeGuard &bull; CodeNeeti Hackathon 2026 &bull; Antigravity Multi-Agent Architecture
           </span>
-          <span style={{ fontSize: '0.8rem', color: '#88809E', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '0.8rem', color: '#88809E', fontFamily: 'var(--font-mono)', overflowWrap: 'anywhere' }}>
             Pipeline: Deterministic AST &rarr; AnalyzerAgent &rarr; FixAgent &rarr; VerifierAgent &bull; API Contract v1.0
           </span>
         </div>

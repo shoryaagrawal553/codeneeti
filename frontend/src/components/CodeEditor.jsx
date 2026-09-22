@@ -132,6 +132,9 @@ export default function CodeEditor({
       style={{
         position: 'relative',
         height: height || '460px',
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
         backgroundColor: '#0c121e',
         borderBottomLeftRadius: 'var(--radius-lg)',
         borderBottomRightRadius: 'var(--radius-lg)',

@@ -42,20 +42,9 @@ export default function EditorToolbar({
   const langOptions = availableLanguages || SUPPORTED_LANGUAGES;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '0.75rem',
-        padding: '0.75rem 1.15rem',
-        backgroundColor: '#1E192C',
-        borderBottom: '1px solid #2F2844',
-      }}
-    >
+    <div className="editor-toolbar-container">
       {/* Left controls: Language selection, File upload, Sample loader */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', minWidth: 0 }}>
         {/* Language Selection */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
           <Code2 size={15} style={{ color: '#A592D6' }} />
@@ -215,7 +204,7 @@ export default function EditorToolbar({
       </div>
 
       {/* Right controls: Metrics, Clear, Analyze */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', minWidth: 0 }}>
         {/* Code metrics counters */}
         <div
           style={{

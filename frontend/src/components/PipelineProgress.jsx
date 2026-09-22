@@ -89,7 +89,7 @@ export default function PipelineProgress({ currentStageIndex = 0 }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '0.85rem' }}>
         {STAGES.map((stage, idx) => {
           const isDone = idx < currentStageIndex;
           const isActive = idx === currentStageIndex;
@@ -103,6 +103,7 @@ export default function PipelineProgress({ currentStageIndex = 0 }) {
                 gap: '0.75rem',
                 padding: '0.85rem',
                 borderRadius: '12px',
+                minWidth: 0,
                 backgroundColor: isActive
                   ? '#FAF8FD'
                   : isDone

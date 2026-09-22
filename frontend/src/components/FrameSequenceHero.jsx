@@ -237,6 +237,7 @@ export default function FrameSequenceHero({ onStartReview }) {
   // 6. Handle window resize
   useEffect(() => {
     const handleResize = () => {
+      ScrollTrigger.refresh();
       if (isPreloaded && images.length > 0) {
         drawFrame(currentFrameIndexRef.current);
       }
@@ -350,7 +351,8 @@ export default function FrameSequenceHero({ onStartReview }) {
           position: 'sticky',
           top: 0,
           left: 0,
-          width: '100vw',
+          width: '100%',
+          maxWidth: '100%',
           height: '100vh',
           overflow: 'hidden',
           display: 'flex',
@@ -583,17 +585,19 @@ export default function FrameSequenceHero({ onStartReview }) {
                   alignItems: 'center',
                   gap: '0.5rem',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.8rem',
+                  fontSize: 'clamp(0.68rem, 2.2vw, 0.8rem)',
                   fontWeight: 600,
-                  letterSpacing: '0.12em',
+                  letterSpacing: '0.08em',
                   color: '#38bdf8',
                   backgroundColor: 'rgba(15, 12, 28, 0.92)',
                   backdropFilter: 'blur(12px)',
                   border: '1px solid rgba(56, 189, 248, 0.5)',
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 189, 248, 0.25)',
-                  padding: '0.35rem 0.95rem',
+                  padding: '0.35rem 0.85rem',
                   borderRadius: '9999px',
                   marginBottom: '1.25rem',
+                  maxWidth: '100%',
+                  textAlign: 'center',
                 }}
               >
                 <Shield size={14} />
@@ -629,14 +633,14 @@ export default function FrameSequenceHero({ onStartReview }) {
                 Gemini reasoning pipeline for verified security fixes.
               </p>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap', justifyContent: 'center', width: '100%', maxWidth: '480px' }}>
                 <button
                   type="button"
                   onClick={handleScrollToWorkspace}
                   className="btn"
                   style={{
-                    padding: '0.8rem 2rem',
-                    fontSize: '1rem',
+                    padding: '0.75rem 1.6rem',
+                    fontSize: '0.9rem',
                     fontWeight: 700,
                     letterSpacing: '0.04em',
                     backgroundColor: '#5E4F98',
@@ -644,6 +648,7 @@ export default function FrameSequenceHero({ onStartReview }) {
                     border: '1px solid rgba(255, 255, 255, 0.3)',
                     boxShadow: '0 4px 20px rgba(94, 79, 152, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4)',
                     cursor: 'pointer',
+                    maxWidth: '100%',
                   }}
                 >
                   <Terminal size={18} />
@@ -657,8 +662,8 @@ export default function FrameSequenceHero({ onStartReview }) {
                   }}
                   className="btn"
                   style={{
-                    padding: '0.8rem 1.8rem',
-                    fontSize: '0.95rem',
+                    padding: '0.75rem 1.6rem',
+                    fontSize: '0.9rem',
                     fontWeight: 700,
                     letterSpacing: '0.04em',
                     backgroundColor: 'rgba(24, 20, 36, 0.88)',
@@ -667,6 +672,7 @@ export default function FrameSequenceHero({ onStartReview }) {
                     border: '1px solid rgba(255, 255, 255, 0.35)',
                     boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
                     cursor: 'pointer',
+                    maxWidth: '100%',
                   }}
                 >
                   ENTER THE MACHINE <ChevronRight size={16} />
@@ -967,6 +973,7 @@ export default function FrameSequenceHero({ onStartReview }) {
         {/* Bottom subtle progress tracker bar */}
         {isPreloaded && !isReducedMotion && (
           <div
+            className="hero-progress-bar-container"
             style={{
               position: 'absolute',
               bottom: '1.5rem',
@@ -980,17 +987,20 @@ export default function FrameSequenceHero({ onStartReview }) {
               fontSize: '0.75rem',
               color: '#64748b',
               pointerEvents: 'none',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>SCROLL PROGRESS</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+              <span style={{ whiteSpace: 'nowrap' }}>SCROLL PROGRESS</span>
               <div
                 style={{
-                  width: '120px',
+                  width: '90px',
                   height: '4px',
                   backgroundColor: 'rgba(255, 255, 255, 0.1)',
                   borderRadius: '2px',
                   overflow: 'hidden',
+                  flexShrink: 0,
                 }}
               >
                 <div
@@ -1005,7 +1015,7 @@ export default function FrameSequenceHero({ onStartReview }) {
               <span style={{ color: '#00f0ff' }}>{Math.round(scrollProgress * 100)}%</span>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="hero-phases-labels" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <span style={{ color: scrollPhase === 0 ? '#ffffff' : '#64748b' }}>01 EXTERIOR</span>
               <span style={{ color: scrollPhase === 1 ? '#ffffff' : '#64748b' }}>02 AST SCAN</span>
               <span style={{ color: scrollPhase === 2 ? '#ffffff' : '#64748b' }}>03 REASONING</span>

@@ -13,32 +13,19 @@ export default function Header({ onReset, onScrollToHero, onScrollToWorkspace, b
     <header
       style={{
         position: 'sticky',
-        top: '1.25rem',
+        top: '1rem',
         zIndex: 100,
         display: 'flex',
         justifyContent: 'center',
-        padding: '0 1rem',
+        padding: '0 0.75rem',
         pointerEvents: 'none', // Allow clicking through outside the pill
+        width: '100%',
+        boxSizing: 'border-box',
       }}
     >
       <nav
         aria-label="Primary Navigation"
-        style={{
-          pointerEvents: 'auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '1.5rem',
-          backgroundColor: 'rgba(255, 255, 255, 0.96)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid #E8E2F2',
-          borderRadius: '9999px',
-          padding: '0.5rem 1.25rem 0.5rem 1.25rem',
-          boxShadow: '0 4px 24px rgba(35, 25, 60, 0.08), 0 1px 4px rgba(35, 25, 60, 0.04)',
-          width: '100%',
-          maxWidth: '960px',
-        }}
+        className="navbar-pill"
       >
         {/* Brand: Clean, bold, developer-focused */}
         <div
@@ -49,6 +36,7 @@ export default function Header({ onReset, onScrollToHero, onScrollToWorkspace, b
             gap: '0.65rem',
             cursor: 'pointer',
             userSelect: 'none',
+            flexShrink: 0,
           }}
         >
           <div
@@ -72,7 +60,7 @@ export default function Header({ onReset, onScrollToHero, onScrollToWorkspace, b
             style={{
               fontFamily: 'var(--font-sans)',
               fontWeight: 800,
-              fontSize: '1rem',
+              fontSize: '0.95rem',
               letterSpacing: '0.04em',
               color: '#1A1626',
             }}
@@ -82,7 +70,7 @@ export default function Header({ onReset, onScrollToHero, onScrollToWorkspace, b
         </div>
 
         {/* Horizontal Navigation Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+        <div className="navbar-nav-links">
           {onScrollToHero && (
             <button
               type="button"
@@ -164,7 +152,7 @@ export default function Header({ onReset, onScrollToHero, onScrollToWorkspace, b
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.45rem',
-            padding: '0.3rem 0.75rem',
+            padding: '0.3rem 0.65rem',
             backgroundColor: isOnline ? '#ECFDF5' : '#F5F3FF',
             border: `1px solid ${isOnline ? '#A7F3D0' : '#DDD6FE'}`,
             borderRadius: '9999px',
@@ -173,6 +161,7 @@ export default function Header({ onReset, onScrollToHero, onScrollToWorkspace, b
             fontWeight: 700,
             letterSpacing: '0.04em',
             color: isOnline ? '#059669' : '#6D28D9',
+            flexShrink: 0,
           }}
         >
           <span

@@ -317,12 +317,14 @@ export default function DiffViewer({
       </div>
 
       {/* Top Toolbar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <FileDiff size={18} style={{ color: '#5E4F98' }} />
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1A1626' }}>
-            Code Remediation Comparison
-          </h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+            <FileDiff size={18} style={{ color: '#5E4F98', flexShrink: 0 }} />
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1A1626' }}>
+              Code Remediation Comparison
+            </h3>
+          </div>
 
           {/* Diff Mode Switcher: Split BEFORE/AFTER vs Unified */}
           <div
@@ -430,14 +432,7 @@ export default function DiffViewer({
 
       {/* BEFORE / AFTER Comparison Views in Sleek Rounded Workstation Frames */}
       {diffMode === 'split' ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '1rem',
-            alignItems: 'stretch',
-          }}
-        >
+        <div className="diff-split-grid">
           {/* BEFORE Container */}
           <div
             style={{
@@ -448,6 +443,10 @@ export default function DiffViewer({
               border: '1px solid #2D2742',
               overflow: 'hidden',
               boxShadow: '0 8px 24px rgba(18, 15, 29, 0.2)',
+              minWidth: 0,
+              maxWidth: '100%',
+              width: '100%',
+              boxSizing: 'border-box',
             }}
           >
             <div
@@ -502,6 +501,10 @@ export default function DiffViewer({
               border: '1px solid #2D2742',
               overflow: 'hidden',
               boxShadow: '0 8px 24px rgba(18, 15, 29, 0.2)',
+              minWidth: 0,
+              maxWidth: '100%',
+              width: '100%',
+              boxSizing: 'border-box',
             }}
           >
             <div
@@ -560,6 +563,10 @@ export default function DiffViewer({
             maxHeight: '440px',
             overflowY: 'auto',
             boxShadow: '0 8px 24px rgba(18, 15, 29, 0.2)',
+            minWidth: 0,
+            maxWidth: '100%',
+            width: '100%',
+            boxSizing: 'border-box',
           }}
         >
           <div style={{ display: 'table', width: '100%', padding: '0.5rem 0' }}>

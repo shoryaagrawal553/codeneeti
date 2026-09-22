@@ -39,6 +39,8 @@ export default function FindingsList({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
             padding: '0.65rem 1rem',
             backgroundColor: 'var(--bg-surface-elevated)',
             borderRadius: 'var(--radius-md)',
@@ -49,7 +51,7 @@ export default function FindingsList({
           <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
             Total Findings: {summary.total_findings}
           </span>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
             <span style={{ color: 'var(--status-resolved)', fontWeight: 500 }}>
               {summary.resolved} Resolved
             </span>
@@ -85,6 +87,8 @@ export default function FindingsList({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.65rem',
                 padding: '0.85rem 1rem',
                 backgroundColor: isSelected ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
                 border: `1px solid ${isSelected ? 'var(--border-accent)' : 'var(--border-subtle)'}`,
@@ -92,10 +96,11 @@ export default function FindingsList({
                 cursor: 'pointer',
                 boxShadow: isSelected ? 'var(--shadow-glow)' : 'var(--shadow-sm)',
                 transition: 'all var(--transition-fast)',
+                boxSizing: 'border-box',
               }}
               className="card-interactive"
             >
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', minWidth: 0, flex: '1 1 200px' }}>
                 <span
                   className="badge"
                   style={{
@@ -110,7 +115,7 @@ export default function FindingsList({
                   {finding.severity}
                 </span>
 
-                <div style={{ minWidth: 0 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <div
                     style={{
                       fontSize: '0.9rem',
@@ -133,6 +138,7 @@ export default function FindingsList({
                       color: 'var(--text-secondary)',
                       marginTop: '0.25rem',
                       flexWrap: 'wrap',
+                      overflowWrap: 'anywhere',
                     }}
                   >
                     <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>
@@ -150,7 +156,7 @@ export default function FindingsList({
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: 'auto' }}>
                 <span
                   className="badge"
                   style={{

@@ -116,10 +116,12 @@ export default function FileUploader({ onFileLoaded, onError, currentFilename, o
             fontFamily: 'var(--font-mono)',
             color: '#1A1626',
             width: 'fit-content',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}
         >
-          <FileCode size={15} style={{ color: '#5E4F98' }} />
-          <span style={{ fontWeight: 600 }}>{currentFilename}</span>
+          <FileCode size={15} style={{ color: '#5E4F98', flexShrink: 0 }} />
+          <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentFilename}</span>
           <button
             type="button"
             onClick={onClearFile}
@@ -131,6 +133,7 @@ export default function FileUploader({ onFileLoaded, onError, currentFilename, o
               display: 'flex',
               alignItems: 'center',
               padding: '0 2px',
+              flexShrink: 0,
             }}
             title="Detach file"
           >
@@ -147,7 +150,7 @@ export default function FileUploader({ onFileLoaded, onError, currentFilename, o
             border: `1.5px dashed ${isDragging ? '#5E4F98' : '#D8CFEA'}`,
             backgroundColor: isDragging ? '#F4EFFC' : '#FFFFFF',
             borderRadius: '16px',
-            padding: '1rem 1.5rem',
+            padding: '0.85rem 1.25rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -155,6 +158,8 @@ export default function FileUploader({ onFileLoaded, onError, currentFilename, o
             cursor: 'pointer',
             transition: 'all 0.18s ease',
             boxShadow: '0 2px 8px rgba(35, 25, 60, 0.03)',
+            boxSizing: 'border-box',
+            width: '100%',
           }}
         >
           <div
@@ -167,11 +172,12 @@ export default function FileUploader({ onFileLoaded, onError, currentFilename, o
               alignItems: 'center',
               justifyContent: 'center',
               color: '#5E4F98',
+              flexShrink: 0,
             }}
           >
             <UploadCloud size={18} />
           </div>
-          <span style={{ fontSize: '0.875rem', color: '#58516B' }}>
+          <span style={{ fontSize: '0.85rem', color: '#58516B', minWidth: 0, overflowWrap: 'anywhere' }}>
             <strong style={{ color: '#1A1626' }}>Click to upload a source file</strong> or drag and drop (.py, .js, .ts, .java, .c, .cpp, .go &bull; max 100 KB)
           </span>
           <input

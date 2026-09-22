@@ -93,7 +93,7 @@ export default function FindingDetail({ finding }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
           gap: '0.75rem',
           padding: '0.75rem',
           backgroundColor: 'var(--bg-canvas)',
@@ -108,7 +108,7 @@ export default function FindingDetail({ finding }) {
         </div>
         <div>
           <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem' }}>STATIC RULE</span>
-          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{finding.rule_id}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{finding.rule_id}</span>
         </div>
         <div>
           <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.7rem' }}>CONFIDENCE</span>
@@ -134,6 +134,8 @@ export default function FindingDetail({ finding }) {
             fontSize: '0.925rem',
             lineHeight: 1.65,
             color: 'var(--text-primary)',
+            overflowWrap: 'anywhere',
+            wordBreak: 'break-word',
           }}
         >
           {finding.explanation}
